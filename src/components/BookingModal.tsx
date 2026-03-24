@@ -23,6 +23,8 @@ const DISTANCE_RATE = 15; // ₹15 per km
 export default function BookingModal({ technician, onClose, onSuccess, userLocation, distance }: BookingModalProps) {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
+  const [address, setAddress] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
@@ -32,9 +34,16 @@ export default function BookingModal({ technician, onClose, onSuccess, userLocat
 
   const estimatedTotal = useMemo(() => {
     if (!technician) return 0;
-    const travelFee = (distance || 0) * DISTANCE_RATE;
-    return Math.round(technician.basePrice + travelFee);
-  }, [technician, distance]);
+    return technician.basePrice;
+  }, [technician]);
+
+  const companyFee = useMemo(() => {
+    return Math.round(estimatedTotal * 0.10);
+  }, [estimatedTotal]);
+
+  const technicianEarnings = useMemo(() => {
+    return estimatedTotal - companyFee;
+  }, [estimatedTotal, companyFee]);
 
   const estimatedTravelTime = useMemo(() => {
     if (!distance) return 0;
@@ -48,6 +57,24 @@ export default function BookingModal({ technician, onClose, onSuccess, userLocat
     const today = new Date().toISOString().split('T')[0];
     return date === today;
   }, [date]);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (auth.currentUser) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            if (data.address) setAddress(data.address);
+            if (data.phone) setPhone(data.phone);
+          }
+        } catch (error) {
+          console.error("Error fetching user data", error);
+        }
+      }
+    };
+    fetchUserData();
+  }, []);
 
   useEffect(() => {
     if (date && technician) {
@@ -120,8 +147,12 @@ export default function BookingModal({ technician, onClose, onSuccess, userLocat
         category: technician.category,
         date,
         time,
+        address,
+        phone,
         status: 'pending',
         price: estimatedTotal,
+        companyFee,
+        technicianEarnings,
         distance: distance || 0,
         paymentStatus: (paymentMethod === 'Credit Card' || paymentMethod === 'Debit Card') ? 'paid' : 'pending',
         paymentMethod,
@@ -151,38 +182,38 @@ export default function BookingModal({ technician, onClose, onSuccess, userLocat
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="absolute inset-0 bg-zinc-900/60 backdrop-blur-sm"
+          className="absolute inset-0 bg-zinc-950/80 backdrop-blur-sm"
         />
         <motion.div
           drag
           dragMomentum={false}
           dragElastic={0.05}
-          whileDrag={{ scale: 1.02, boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)" }}
+          whileDrag={{ scale: 1.02, boxShadow: "0 25px 50px -12px rgb(0 0 0 / 0.25)" }}
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl"
+          className="relative w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-xl border border-zinc-200"
         >
-          <div className="flex items-center justify-between border-b border-zinc-100 px-6 py-4 cursor-grab active:cursor-grabbing bg-zinc-50/50 select-none">
+          <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-4 cursor-grab active:cursor-grabbing bg-zinc-50/80 select-none backdrop-blur-md">
             <div className="flex items-center gap-2">
               <GripHorizontal size={16} className="text-zinc-400" />
-              <h2 className="text-xl font-bold text-zinc-900 pointer-events-none">
-                {step === 'success' ? 'Booking Confirmed!' : `Book ${technician.name}`}
+              <h2 className="text-base font-semibold text-zinc-900 pointer-events-none tracking-tight">
+                {step === 'success' ? 'Booking Confirmed' : `Book ${technician.name}`}
               </h2>
             </div>
             <button
               onClick={onClose}
-              className="rounded-full p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+              className="rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-zinc-200 hover:text-zinc-900"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
 
-          <div className="p-6">
+          <div className="p-5">
             {step === 'details' && (
               <div className="space-y-6">
-                <div className="flex items-center gap-4 rounded-2xl bg-emerald-50 p-4">
-                  <div className="h-12 w-12 overflow-hidden rounded-xl bg-white shadow-sm">
+                <div className="flex items-center gap-4 rounded-lg bg-zinc-50 border border-zinc-100 p-4">
+                  <div className="h-12 w-12 overflow-hidden rounded-md bg-white shadow-sm border border-zinc-200">
                     <img
                       src={`https://picsum.photos/seed/${technician.id}/100/100`}
                       alt={technician.name}
@@ -191,22 +222,22 @@ export default function BookingModal({ technician, onClose, onSuccess, userLocat
                     />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-emerald-800">{technician.category.toUpperCase()}</p>
-                    <p className="text-xs text-emerald-600">Base Price: ₹{technician.basePrice}</p>
+                    <p className="text-xs font-semibold text-zinc-500 mb-0.5">{technician.category}</p>
+                    <p className="text-sm font-semibold text-zinc-900">Base Price: <span className="text-emerald-600">₹{technician.basePrice}</span></p>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-zinc-700">1. Choose Date</label>
+                    <label className="text-xs font-semibold text-zinc-700">1. Choose Date</label>
                     <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
                       <input
                         type="date"
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
                         min={new Date().toISOString().split('T')[0]}
-                        className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
+                        className="w-full rounded-lg border border-zinc-200 bg-white py-2.5 pl-10 pr-3 text-sm font-medium focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 outline-none transition-all"
                       />
                     </div>
                   </div>
@@ -214,8 +245,8 @@ export default function BookingModal({ technician, onClose, onSuccess, userLocat
                   {date && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-semibold text-zinc-700">2. Available Slots</label>
-                        {checkingAvailability && <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />}
+                        <label className="text-xs font-semibold text-zinc-700">2. Available Slots</label>
+                        {checkingAvailability && <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-400" />}
                       </div>
                       <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
                         {TIME_SLOTS.map((slot) => {
@@ -225,12 +256,12 @@ export default function BookingModal({ technician, onClose, onSuccess, userLocat
                               key={slot}
                               disabled={isBooked || checkingAvailability}
                               onClick={() => setTime(slot)}
-                              className={`rounded-lg py-2 text-xs font-medium transition-all ${
+                              className={`rounded-lg py-2 text-xs font-medium transition-all duration-200 ${
                                 time === slot
-                                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-100'
+                                  ? 'bg-zinc-900 text-white shadow-sm'
                                   : isBooked
-                                  ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
-                                  : 'bg-zinc-50 text-zinc-600 hover:bg-zinc-100'
+                                  ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed opacity-50'
+                                  : 'bg-zinc-50 text-zinc-600 border border-zinc-200 hover:border-zinc-400 hover:text-zinc-900'
                               }`}
                             >
                               {slot}
@@ -239,28 +270,49 @@ export default function BookingModal({ technician, onClose, onSuccess, userLocat
                         })}
                       </div>
                       {bookedSlots.length > 0 && !checkingAvailability && (
-                        <p className="text-[10px] text-zinc-400">Some slots are already booked for this day.</p>
+                        <p className="text-[11px] text-zinc-500">Some slots are already booked for this day.</p>
                       )}
                     </div>
                   )}
+                  
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-zinc-700">3. Service Address</label>
+                    <textarea
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      placeholder="Enter your full address"
+                      className="w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm font-medium focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 outline-none transition-all resize-none h-20"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-zinc-700">4. Phone Number</label>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="Enter your phone number"
+                      className="w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm font-medium focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 outline-none transition-all"
+                    />
+                  </div>
                 </div>
 
-                <div className="rounded-2xl bg-zinc-50 p-4">
-                  <div className="flex items-start gap-2">
+                <div className="rounded-lg bg-zinc-50 border border-zinc-100 p-4">
+                  <div className="flex items-start gap-2.5">
                     <Info size={16} className="mt-0.5 text-zinc-400 shrink-0" />
                     <div className="space-y-1">
-                      <p className="text-xs font-semibold text-zinc-700">Estimated Total: ₹{estimatedTotal}</p>
-                      <p className="text-[10px] text-zinc-500 leading-relaxed">
-                        Includes base price (₹{technician.basePrice}) + travel fee (₹{Math.round((distance || 0) * DISTANCE_RATE)} for {distance?.toFixed(1)} km). Final price may vary based on actual work.
+                      <p className="text-sm font-semibold text-zinc-900">Estimated Total: <span className="text-emerald-600">₹{estimatedTotal}</span></p>
+                      <p className="text-xs text-zinc-500 leading-relaxed">
+                        This is the base price for the service. Final price may vary based on actual work required.
                       </p>
                     </div>
                   </div>
                 </div>
 
                 <button
-                  disabled={!date || !time || checkingAvailability}
+                  disabled={!date || !time || !address.trim() || !phone.trim() || checkingAvailability}
                   onClick={() => setStep('payment')}
-                  className="w-full rounded-2xl bg-zinc-900 py-3.5 text-sm font-bold text-white transition-all hover:bg-zinc-800 disabled:opacity-50 disabled:hover:bg-zinc-900 active:scale-[0.98]"
+                  className="w-full rounded-lg bg-zinc-900 py-3 text-sm font-semibold text-white transition-all hover:bg-zinc-800 disabled:opacity-50 disabled:hover:bg-zinc-900 active:scale-[0.98] shadow-sm"
                 >
                   Continue to Payment
                 </button>
@@ -269,9 +321,9 @@ export default function BookingModal({ technician, onClose, onSuccess, userLocat
 
             {step === 'payment' && (
               <div className="space-y-6">
-                <div className="space-y-4">
-                  <label className="text-sm font-semibold text-zinc-700">Select Payment Method</label>
-                  <div className="space-y-3">
+                <div className="space-y-3">
+                  <label className="text-xs font-semibold text-zinc-700">Select Payment Method</label>
+                  <div className="space-y-2">
                     {[
                       { id: 'Credit Card', icon: CreditCard, label: 'Credit Card' },
                       { id: 'Debit Card', icon: Wallet, label: 'Debit Card' },
@@ -280,23 +332,23 @@ export default function BookingModal({ technician, onClose, onSuccess, userLocat
                       <button
                         key={method.id}
                         onClick={() => setPaymentMethod(method.id as any)}
-                        className={`flex w-full items-center gap-4 rounded-2xl border p-4 transition-all ${
+                        className={`flex w-full items-center gap-3 rounded-lg border p-3 transition-all duration-200 ${
                           paymentMethod === method.id
-                            ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/20'
-                            : 'border-zinc-100 bg-white hover:border-zinc-200'
+                            ? 'border-zinc-900 bg-zinc-50 ring-1 ring-zinc-900'
+                            : 'border-zinc-200 bg-white hover:border-zinc-300'
                         }`}
                       >
-                        <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                          paymentMethod === method.id ? 'bg-emerald-600 text-white' : 'bg-zinc-100 text-zinc-400'
+                        <div className={`flex h-10 w-10 items-center justify-center rounded-md transition-colors ${
+                          paymentMethod === method.id ? 'bg-zinc-900 text-white shadow-sm' : 'bg-zinc-100 text-zinc-500'
                         }`}>
-                          <method.icon size={20} />
+                          <method.icon size={18} />
                         </div>
-                        <span className={`font-bold ${paymentMethod === method.id ? 'text-emerald-900' : 'text-zinc-600'}`}>
+                        <span className={`font-medium text-sm ${paymentMethod === method.id ? 'text-zinc-900' : 'text-zinc-700'}`}>
                           {method.label}
                         </span>
                         {paymentMethod === method.id && (
-                          <div className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white">
-                            <CheckCircle2 size={14} />
+                          <div className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-zinc-900 text-white shadow-sm">
+                            <CheckCircle2 size={12} />
                           </div>
                         )}
                       </button>
@@ -304,16 +356,16 @@ export default function BookingModal({ technician, onClose, onSuccess, userLocat
                   </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                   <button
                     onClick={() => setStep('details')}
-                    className="flex-1 rounded-2xl border border-zinc-200 py-3.5 text-sm font-bold text-zinc-600 transition-all hover:bg-zinc-50 active:scale-[0.98]"
+                    className="flex-1 rounded-lg border border-zinc-200 py-3 text-sm font-semibold text-zinc-600 transition-all hover:bg-zinc-50 active:scale-[0.98]"
                   >
                     Back
                   </button>
                   <button
                     onClick={() => setStep('confirm')}
-                    className="flex-[2] rounded-2xl bg-zinc-900 py-3.5 text-sm font-bold text-white transition-all hover:bg-zinc-800 active:scale-[0.98]"
+                    className="flex-[2] rounded-lg bg-zinc-900 py-3 text-sm font-semibold text-white transition-all hover:bg-zinc-800 active:scale-[0.98] shadow-sm"
                   >
                     Continue to Confirmation
                   </button>
@@ -323,56 +375,60 @@ export default function BookingModal({ technician, onClose, onSuccess, userLocat
 
             {step === 'confirm' && (
               <div className="space-y-6">
-                <div className="rounded-2xl border border-zinc-100 bg-zinc-50 p-5 space-y-4">
+                <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-5 space-y-4">
                   <div className="flex justify-between text-sm">
-                    <span className="text-zinc-500">Service</span>
-                    <span className="font-semibold text-zinc-900 capitalize">{technician.category}</span>
+                    <span className="font-medium text-zinc-500">Service</span>
+                    <span className="font-semibold text-zinc-900">{technician.category}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-zinc-500">Professional</span>
+                    <span className="font-medium text-zinc-500">Professional</span>
                     <span className="font-semibold text-zinc-900">{technician.name}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-zinc-500">Date & Time</span>
+                    <span className="font-medium text-zinc-500">Date & Time</span>
                     <span className="font-semibold text-zinc-900">{new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} at {time}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-zinc-500">Distance</span>
-                    <span className="font-semibold text-zinc-900">{distance?.toFixed(1)} km</span>
+                    <span className="font-medium text-zinc-500">Address</span>
+                    <span className="font-semibold text-zinc-900 text-right max-w-[60%] truncate">{address}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-zinc-500">Payment Method</span>
+                    <span className="font-medium text-zinc-500">Phone</span>
+                    <span className="font-semibold text-zinc-900">{phone}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="font-medium text-zinc-500">Payment Method</span>
                     <span className="font-semibold text-zinc-900">{paymentMethod}</span>
                   </div>
                   {isToday && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-zinc-500">Est. Arrival Time</span>
-                      <div className="flex items-center gap-1.5 font-semibold text-emerald-600">
-                        <Navigation size={14} className="rotate-45" />
+                      <span className="font-medium text-zinc-500">Est. Arrival Time</span>
+                      <div className="flex items-center gap-1.5 font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                        <Navigation size={12} className="rotate-45" />
                         <span>~{estimatedTravelTime} mins</span>
                       </div>
                     </div>
                   )}
-                  <div className="border-t border-zinc-200 pt-4 flex justify-between">
+                  <div className="border-t border-zinc-200 pt-4 flex justify-between items-end">
                     <div className="space-y-0.5">
-                      <span className="font-bold text-zinc-900">Total Amount</span>
-                      <p className="text-[10px] text-zinc-400">Incl. base price & travel fee</p>
+                      <span className="font-semibold text-zinc-900">Total Amount</span>
+                      <p className="text-[11px] text-zinc-500">Incl. base price & travel fee</p>
                     </div>
-                    <span className="text-lg font-bold text-emerald-600">₹{estimatedTotal}</span>
+                    <span className="text-xl font-bold text-emerald-600">₹{estimatedTotal}</span>
                   </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                   <button
                     onClick={() => setStep('payment')}
-                    className="flex-1 rounded-2xl border border-zinc-200 py-3.5 text-sm font-bold text-zinc-600 transition-all hover:bg-zinc-50 active:scale-[0.98]"
+                    className="flex-1 rounded-lg border border-zinc-200 py-3 text-sm font-semibold text-zinc-600 transition-all hover:bg-zinc-50 active:scale-[0.98]"
                   >
                     Back
                   </button>
                   <button
                     disabled={loading}
                     onClick={handleBooking}
-                    className="flex-[2] flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-3.5 text-sm font-bold text-white transition-all hover:bg-emerald-700 active:scale-[0.98]"
+                    className="flex-[2] flex items-center justify-center gap-2 rounded-lg bg-emerald-600 py-3 text-sm font-semibold text-white transition-all hover:bg-emerald-700 active:scale-[0.98] shadow-sm"
                   >
                     {paymentProcessing ? (
                       <>
@@ -390,15 +446,15 @@ export default function BookingModal({ technician, onClose, onSuccess, userLocat
             )}
 
             {step === 'success' && (
-              <div className="py-8 text-center space-y-4">
-                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                  <CheckCircle2 size={48} />
+              <div className="py-8 text-center space-y-5">
+                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
+                  <CheckCircle2 size={40} />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-zinc-900">Awesome!</h3>
-                  <p className="mt-2 text-zinc-500">Your booking request has been sent to {technician.name}.</p>
+                  <h3 className="text-2xl font-semibold text-zinc-900 tracking-tight">Awesome!</h3>
+                  <p className="mt-2 text-sm text-zinc-500">Your booking request has been sent to <span className="font-semibold text-zinc-900">{technician.name}</span>.</p>
                   {isToday && (
-                    <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">
+                    <div className="mt-5 inline-flex items-center gap-2 rounded-lg bg-emerald-50 border border-emerald-100 px-4 py-2.5 text-sm font-medium text-emerald-700">
                       <Clock size={16} />
                       <span>Estimated arrival in {estimatedTravelTime} mins</span>
                     </div>

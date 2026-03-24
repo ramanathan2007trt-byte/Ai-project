@@ -18,10 +18,10 @@ const createTechIcon = (category: string, isBusy: boolean) => {
   const colorClass = isBusy ? 'bg-amber-500' : 'bg-emerald-600';
   return L.divIcon({
     html: renderToStaticMarkup(
-      <div className={`flex h-10 w-10 items-center justify-center rounded-full border-2 border-white ${colorClass} text-white shadow-lg transition-all hover:scale-110`}>
-        <Navigation size={20} className="rotate-45" />
+      <div className={`flex h-10 w-10 items-center justify-center rounded-xl border-2 border-white ${colorClass} text-white shadow-md transition-all hover:scale-105`}>
+        <Navigation size={18} className="rotate-45" />
         {isBusy && (
-          <div className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white text-amber-500 shadow-sm">
+          <div className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-amber-500 shadow-sm border border-amber-100">
             <Clock size={10} />
           </div>
         )}
@@ -35,8 +35,8 @@ const createTechIcon = (category: string, isBusy: boolean) => {
 
 const userIcon = L.divIcon({
   html: renderToStaticMarkup(
-    <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-zinc-900 text-white shadow-lg">
-      <User size={20} />
+    <div className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-white bg-zinc-900 text-white shadow-md">
+      <User size={18} />
     </div>
   ),
   className: 'custom-div-icon',
@@ -79,9 +79,9 @@ const TechMarker: React.FC<{ tech: Technician, onSelectTech: (t: Technician) => 
       }}
     >
       <Popup className="tech-popup">
-        <div className="w-48 space-y-3 p-1">
+        <div className="w-52 space-y-3 p-1">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 overflow-hidden rounded-lg bg-zinc-100">
+            <div className="h-12 w-12 overflow-hidden rounded-lg bg-zinc-100 border border-zinc-200">
               <img
                 src={`https://picsum.photos/seed/${tech.id}/100/100`}
                 alt={tech.name}
@@ -90,24 +90,24 @@ const TechMarker: React.FC<{ tech: Technician, onSelectTech: (t: Technician) => 
               />
             </div>
             <div>
-              <div className="flex items-center gap-1">
-                <h4 className="text-sm font-bold text-zinc-900">{tech.name}</h4>
+              <div className="flex items-center gap-1.5">
+                <h4 className="text-sm font-black text-zinc-900 tracking-tight">{tech.name}</h4>
                 {tech.verified && <ShieldCheck size={14} className="text-emerald-600" />}
               </div>
-              <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{tech.category}</p>
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{tech.category}</p>
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center justify-between text-xs border-t border-zinc-100 pt-2">
             <div className="flex items-center gap-1">
-              <Star size={12} className="fill-amber-400 text-amber-400" />
-              <span className="font-bold text-zinc-700">{tech.rating}</span>
+              <Star size={12} className="fill-amber-500 text-amber-500" />
+              <span className="font-bold text-zinc-900">{tech.rating}</span>
             </div>
-            <span className="font-bold text-emerald-600">₹{tech.basePrice}</span>
+            <span className="font-black text-emerald-600">₹{tech.basePrice}</span>
           </div>
 
-          <div className={`flex items-center gap-2 rounded-lg px-2 py-1 text-[10px] font-bold ${
-            tech.isBusy ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'
+          <div className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider ${
+            tech.isBusy ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
           }`}>
             {tech.isBusy ? <AlertCircle size={12} /> : <Clock size={12} />}
             <span>{tech.isBusy ? 'Currently Busy' : 'Available Now'}</span>
@@ -115,7 +115,7 @@ const TechMarker: React.FC<{ tech: Technician, onSelectTech: (t: Technician) => 
 
           <button
             onClick={() => onSelectTech(tech)}
-            className="w-full rounded-xl bg-zinc-900 py-2 text-xs font-bold text-white transition-all hover:bg-zinc-800 active:scale-95"
+            className="w-full rounded-xl bg-zinc-900 py-2.5 text-xs font-bold text-white transition-all hover:bg-zinc-800 active:scale-95 shadow-sm"
           >
             Book Now
           </button>
@@ -136,7 +136,7 @@ export default function TechnicianMap({ technicians, userLocation, onSelectTech 
   const center: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : defaultCenter;
 
   return (
-    <div className="h-[600px] w-full overflow-hidden rounded-3xl border border-zinc-200 bg-zinc-100 shadow-inner">
+    <div className="h-[600px] w-full overflow-hidden rounded-3xl border border-zinc-200 bg-zinc-50 shadow-sm">
       <MapContainer
         center={center}
         zoom={12}
@@ -145,13 +145,13 @@ export default function TechnicianMap({ technicians, userLocation, onSelectTech 
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         />
         
         {userLocation && (
           <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
             <Popup>
-              <div className="text-sm font-bold">Your Location</div>
+              <div className="text-sm font-bold tracking-tight">Your Location</div>
             </Popup>
           </Marker>
         )}

@@ -59,8 +59,12 @@
         "category": { "type": "string", "description": "The service category" },
         "date": { "type": "string", "description": "The date of the service" },
         "time": { "type": "string", "description": "The time of the service" },
+        "address": { "type": "string", "description": "The service address" },
+        "phone": { "type": "string", "description": "The user's phone number" },
         "status": { "type": "string", "enum": ["pending", "confirmed", "completed", "cancelled"], "description": "The booking status" },
         "price": { "type": "number", "description": "The total price" },
+        "companyFee": { "type": "number", "description": "The 10% company fee" },
+        "technicianEarnings": { "type": "number", "description": "The technician's earnings" },
         "distance": { "type": "number", "description": "Distance between user and technician in km" },
         "paymentStatus": { "type": "string", "enum": ["paid", "pending"], "description": "The payment status" },
         "createdAt": { "type": "string", "format": "date-time", "description": "When the booking was created" }

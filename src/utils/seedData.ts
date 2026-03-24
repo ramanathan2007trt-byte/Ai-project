@@ -1,22 +1,43 @@
 import { db, collection, doc, setDoc, Timestamp } from '../firebase';
 
-export const seedDatabase = async () => {
-  const technicians = [
-    { name: 'Rajesh Kumar', category: 'electrician', basePrice: 299, experience: 8, rating: 4.8, totalJobs: 156, online: true, isBusy: false, verified: true, location: { lat: 19.0760, lng: 72.8777 } },
-    { name: 'Amit Singh', category: 'plumber', basePrice: 199, experience: 5, rating: 4.5, totalJobs: 89, online: true, isBusy: true, verified: true, location: { lat: 19.0860, lng: 72.8877 } },
-    { name: 'Suresh Raina', category: 'ac', basePrice: 499, experience: 12, rating: 4.9, totalJobs: 320, online: true, isBusy: false, verified: false, location: { lat: 19.0660, lng: 72.8677 } },
-    { name: 'Vijay Varma', category: 'fridge', basePrice: 399, experience: 6, rating: 4.2, totalJobs: 45, online: true, isBusy: false, verified: true, location: { lat: 19.0960, lng: 72.8977 } },
-    { name: 'Karan Johar', category: 'electrician', basePrice: 349, experience: 4, rating: 4.6, totalJobs: 67, online: true, isBusy: true, verified: false, location: { lat: 19.0560, lng: 72.8577 } },
-    { name: 'Priya Sharma', category: 'plumber', basePrice: 249, experience: 7, rating: 4.7, totalJobs: 112, online: true, isBusy: false, verified: true, location: { lat: 19.0460, lng: 72.8477 } },
-    { name: 'Anil Kapoor', category: 'ac', basePrice: 549, experience: 15, rating: 5.0, totalJobs: 450, online: true, isBusy: false, verified: true, location: { lat: 19.1060, lng: 72.9077 } },
-    { name: 'Deepika Padukone', category: 'fridge', basePrice: 449, experience: 3, rating: 4.4, totalJobs: 32, online: true, isBusy: false, verified: false, location: { lat: 19.1160, lng: 72.9177 } },
-    { name: 'Ranveer Singh', category: 'electrician', basePrice: 399, experience: 9, rating: 4.9, totalJobs: 210, online: true, isBusy: false, verified: true, location: { lat: 19.1260, lng: 72.9277 } },
-    { name: 'Alia Bhatt', category: 'plumber', basePrice: 299, experience: 4, rating: 4.3, totalJobs: 58, online: true, isBusy: false, verified: true, location: { lat: 19.1360, lng: 72.9377 } },
-  ];
+const firstNames = ['Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Riya', 'Aanya', 'Diya', 'Ananya', 'John', 'Jane', 'Michael', 'Sarah', 'David', 'Emily', 'James', 'Emma', 'Robert', 'Olivia'];
+const lastNames = ['Sharma', 'Patel', 'Singh', 'Kumar', 'Das', 'Bose', 'Gupta', 'Joshi', 'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez'];
+const categories = ['electrician', 'plumber', 'ac', 'fridge'];
+
+const getRandomElement = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+const getRandomNumber = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+const getRandomFloat = (min: number, max: number, decimals: number) => Number((Math.random() * (max - min) + min).toFixed(decimals));
+
+export const seedDatabase = async (centerLocation: { lat: number, lng: number }) => {
+  const technicians = [];
+
+  for (let i = 0; i < 20; i++) {
+    const name = `${getRandomElement(firstNames)} ${getRandomElement(lastNames)}`;
+    // Generate location within roughly 10-15km radius
+    // 1 degree latitude is approx 111km. So 0.1 degree is ~11km.
+    const latOffset = getRandomFloat(-0.1, 0.1, 6);
+    const lngOffset = getRandomFloat(-0.1, 0.1, 6);
+    
+    technicians.push({
+      name,
+      category: getRandomElement(categories),
+      basePrice: getRandomNumber(199, 999),
+      experience: getRandomNumber(1, 20),
+      rating: getRandomFloat(3.5, 5.0, 1),
+      totalJobs: getRandomNumber(10, 500),
+      online: Math.random() > 0.2, // 80% chance to be online
+      isBusy: Math.random() > 0.7, // 30% chance to be busy
+      verified: Math.random() > 0.1, // 90% chance to be verified
+      location: {
+        lat: centerLocation.lat + latOffset,
+        lng: centerLocation.lng + lngOffset
+      }
+    });
+  }
 
   try {
     for (const tech of technicians) {
-      const techId = tech.name.toLowerCase().replace(/\s+/g, '-');
+      const techId = tech.name.toLowerCase().replace(/\s+/g, '-') + '-' + getRandomNumber(1000, 9999);
       await setDoc(doc(db, 'technicians', techId), {
         ...tech,
         email: `${techId}@example.com`,

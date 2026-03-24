@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { db, collection, query, where, orderBy, onSnapshot, auth, handleFirestoreError, OperationType, updateDoc, doc } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { Booking } from '../types';
-import { Calendar, Clock, MapPin, CheckCircle2, Clock3, XCircle, AlertCircle, Loader2, History, Trash2, X, Navigation, GripHorizontal, Filter, ArrowUpDown, ChevronDown, Star } from 'lucide-react';
+import { Calendar, Clock, MapPin, CheckCircle2, Clock3, XCircle, AlertCircle, Loader2, History, Trash2, X, Navigation, GripHorizontal, Filter, ArrowUpDown, ChevronDown, Star, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -98,16 +98,21 @@ export default function BookingsHistory() {
     }
     setIsCompleting(true);
     try {
-      // Calculate final cost: base price + (time * hourly rate) + travel fee
+      // Calculate final cost: base price + (time * hourly rate)
       // Let's assume hourly rate is 200 for now.
       const hourlyRate = 200;
       const additionalTimeCost = Math.max(0, timeConsumed - 1) * hourlyRate; // first hour is included in base price
       const finalCost = completingBooking.price + additionalTimeCost;
+      
+      const companyFee = Math.round(finalCost * 0.10);
+      const technicianEarnings = finalCost - companyFee;
 
       await updateDoc(doc(db, 'bookings', completingBooking.id), {
         status: 'completed',
         timeConsumed,
-        finalCost
+        finalCost,
+        companyFee,
+        technicianEarnings
       });
       toast.success('Service completed successfully');
       setCompletingBooking(null);
@@ -144,20 +149,20 @@ export default function BookingsHistory() {
   }, [bookings, statusFilter, categoryFilter, sortBy]);
 
   const statusIcons = {
-    pending: { icon: Clock3, color: 'text-amber-500 bg-amber-50 border-amber-100' },
-    confirmed: { icon: CheckCircle2, color: 'text-blue-500 bg-blue-50 border-blue-100' },
-    completed: { icon: CheckCircle2, color: 'text-emerald-500 bg-emerald-50 border-emerald-100' },
-    cancelled: { icon: XCircle, color: 'text-red-500 bg-red-50 border-red-100' },
+    pending: { icon: Clock3, color: 'text-amber-600 bg-amber-50 border-amber-200' },
+    confirmed: { icon: CheckCircle2, color: 'text-blue-600 bg-blue-50 border-blue-200' },
+    completed: { icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
+    cancelled: { icon: XCircle, color: 'text-red-600 bg-red-50 border-red-200' },
   };
 
   if (!user) {
     return (
       <div className="flex h-[60vh] flex-col items-center justify-center p-8 text-center">
-        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
+        <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-zinc-100 text-zinc-400 shadow-inner">
           <AlertCircle size={48} />
         </div>
-        <h2 className="mt-6 text-2xl font-bold text-zinc-900">Sign in to view history</h2>
-        <p className="mt-2 text-zinc-500">You need to be logged in to see your booking history.</p>
+        <h2 className="mt-6 text-3xl font-black text-zinc-900 tracking-tight">Sign in to view history</h2>
+        <p className="mt-3 text-zinc-500 font-medium">You need to be logged in to see your booking history.</p>
       </div>
     );
   }
@@ -165,26 +170,26 @@ export default function BookingsHistory() {
   return (
     <div className="min-h-screen bg-zinc-50 py-12">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-200">
+        <div className="mb-10 flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-900 text-white shadow-md">
             <History size={24} />
           </div>
           <div className="flex-1">
             <h1 className="text-3xl font-bold tracking-tight text-zinc-900">My Bookings</h1>
-            <p className="text-zinc-500">Track your service requests and repair history.</p>
+            <p className="text-zinc-500 text-sm mt-1">Track your service requests and repair history.</p>
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-bold transition-all ${
+            className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-all duration-200 ${
               showFilters || statusFilter !== 'all' || categoryFilter !== 'all'
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
+                ? 'border-zinc-900 bg-zinc-50 text-zinc-900 shadow-sm'
+                : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 hover:border-zinc-300'
             }`}
           >
-            <Filter size={18} />
+            <Filter size={16} />
             <span>Filters</span>
             {(statusFilter !== 'all' || categoryFilter !== 'all') && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-900 text-[10px] text-white shadow-sm">
                 {(statusFilter !== 'all' ? 1 : 0) + (categoryFilter !== 'all' ? 1 : 0)}
               </span>
             )}
@@ -197,16 +202,16 @@ export default function BookingsHistory() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="mb-8 overflow-hidden"
+              className="mb-10 overflow-hidden"
             >
-              <div className="grid grid-cols-1 gap-4 rounded-3xl border border-zinc-200 bg-white p-6 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 rounded-xl border border-zinc-200 bg-white p-5 sm:grid-cols-3 shadow-sm">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">Status</label>
+                  <label className="text-xs font-semibold text-zinc-600">Status</label>
                   <div className="relative">
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="w-full appearance-none rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-700 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full appearance-none rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm font-medium text-zinc-700 outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-all"
                     >
                       {STATUSES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
@@ -215,12 +220,12 @@ export default function BookingsHistory() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">Service Type</label>
+                  <label className="text-xs font-semibold text-zinc-600">Service Type</label>
                   <div className="relative">
                     <select
                       value={categoryFilter}
                       onChange={(e) => setCategoryFilter(e.target.value)}
-                      className="w-full appearance-none rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-700 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full appearance-none rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm font-medium text-zinc-700 outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-all"
                     >
                       {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
@@ -229,12 +234,12 @@ export default function BookingsHistory() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">Sort By Date</label>
+                  <label className="text-xs font-semibold text-zinc-600">Sort By Date</label>
                   <div className="relative">
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest')}
-                      className="w-full appearance-none rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-700 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full appearance-none rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm font-medium text-zinc-700 outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-all"
                     >
                       <option value="newest">Newest First</option>
                       <option value="oldest">Oldest First</option>
@@ -248,12 +253,12 @@ export default function BookingsHistory() {
         </AnimatePresence>
 
         {loading ? (
-          <div className="flex h-64 flex-col items-center justify-center gap-4">
-            <Loader2 className="animate-spin text-emerald-600" size={48} />
-            <p className="text-zinc-500">Loading your history...</p>
+          <div className="flex h-64 flex-col items-center justify-center gap-5">
+            <Loader2 className="animate-spin text-zinc-900" size={48} />
+            <p className="text-zinc-500 font-medium">Loading your history...</p>
           </div>
         ) : filteredAndSortedBookings.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-5">
             <AnimatePresence mode="popLayout">
               {filteredAndSortedBookings.map((booking) => {
                 const StatusIcon = statusIcons[booking.status].icon;
@@ -266,16 +271,16 @@ export default function BookingsHistory() {
                     layout
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="group relative overflow-hidden rounded-3xl border border-zinc-200 bg-white p-6 transition-all hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-500/5"
+                    className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 transition-all duration-300 hover:border-zinc-300 hover:shadow-md"
                   >
-                    <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+                    <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
                       <div className="flex-1 space-y-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <span className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wider ${statusIcons[booking.status].color}`}>
+                            <span className={`rounded-md border px-3 py-1 text-xs font-semibold capitalize ${statusIcons[booking.status].color}`}>
                               {booking.status}
                             </span>
-                            <span className="text-xs font-medium text-zinc-400">
+                            <span className="text-xs font-medium text-zinc-500">
                               Booked on {booking.createdAt?.toDate().toLocaleDateString()}
                             </span>
                           </div>
@@ -285,7 +290,7 @@ export default function BookingsHistory() {
                                   {canTrack && (
                                     <Link
                                       to={`/tracking/${booking.id}`}
-                                      className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white transition-all hover:bg-emerald-700 hover:shadow-lg active:scale-95"
+                                      className="flex items-center gap-1.5 rounded-lg bg-zinc-900 px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-zinc-800 hover:shadow-sm active:scale-95"
                                     >
                                       <Navigation size={14} className="rotate-45" />
                                       <span>Track Live</span>
@@ -299,7 +304,7 @@ export default function BookingsHistory() {
                                           toast.success('Simulated: Booking confirmed');
                                         } catch (e) { console.error(e); }
                                       }}
-                                      className="rounded-xl bg-blue-100 px-3 py-2 text-[10px] font-bold text-blue-600 transition-all hover:bg-blue-200"
+                                      className="rounded-lg bg-blue-50 border border-blue-200 px-3 py-2 text-[11px] font-semibold text-blue-700 transition-all hover:bg-blue-100"
                                       title="Simulate Confirmation"
                                     >
                                       Simulate Confirm
@@ -308,7 +313,7 @@ export default function BookingsHistory() {
                                   {booking.status === 'confirmed' && (
                                     <button
                                       onClick={() => setCompletingBooking(booking)}
-                                      className="rounded-xl bg-emerald-100 px-3 py-2 text-[10px] font-bold text-emerald-600 transition-all hover:bg-emerald-200"
+                                      className="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-[11px] font-semibold text-emerald-700 transition-all hover:bg-emerald-100"
                                       title="Simulate Completion"
                                     >
                                       Simulate Complete
@@ -317,17 +322,17 @@ export default function BookingsHistory() {
                                   {booking.status === 'completed' && !booking.hasFeedback && (
                                     <button
                                       onClick={() => setReviewingBooking(booking)}
-                                      className="flex items-center gap-1 rounded-xl bg-amber-100 px-3 py-2 text-[10px] font-bold text-amber-600 transition-all hover:bg-amber-200"
+                                      className="flex items-center gap-1.5 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-[11px] font-semibold text-amber-700 transition-all hover:bg-amber-100"
                                       title="Leave Feedback"
                                     >
-                                      <Star size={12} className="fill-amber-600" />
+                                      <Star size={12} className="fill-amber-500" />
                                       Leave Feedback
                                     </button>
                                   )}
                                   {canCancel && (
                                     <button
                                       onClick={() => setCancellingBooking(booking)}
-                                      className="rounded-full p-2 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                                      className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600"
                                       title="Cancel Booking"
                                     >
                                       <Trash2 size={18} />
@@ -337,7 +342,7 @@ export default function BookingsHistory() {
                               </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-x-8 gap-y-3">
+                        <div className="flex flex-wrap gap-x-6 gap-y-3">
                           <div className="flex items-center gap-2 text-sm text-zinc-600">
                             <Calendar size={16} className="text-zinc-400" />
                             <span className="font-medium">{booking.date}</span>
@@ -350,6 +355,18 @@ export default function BookingsHistory() {
                             <MapPin size={16} className="text-zinc-400" />
                             <span className="font-medium capitalize">{booking.category} Service</span>
                           </div>
+                          {booking.address && (
+                            <div className="flex items-center gap-2 text-sm text-zinc-600 w-full">
+                              <MapPin size={16} className="text-zinc-400 shrink-0" />
+                              <span className="font-medium truncate">{booking.address}</span>
+                            </div>
+                          )}
+                          {booking.phone && (
+                            <div className="flex items-center gap-2 text-sm text-zinc-600">
+                              <Phone size={16} className="text-zinc-400 shrink-0" />
+                              <span className="font-medium">{booking.phone}</span>
+                            </div>
+                          )}
                           {booking.status === 'completed' && booking.timeConsumed && (
                             <div className="flex items-center gap-2 text-sm text-zinc-600">
                               <Clock3 size={16} className="text-zinc-400" />
@@ -359,23 +376,23 @@ export default function BookingsHistory() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-4 border-t border-zinc-100 pt-6 sm:border-l sm:border-t-0 sm:pl-8 sm:pt-0">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
-                          <StatusIcon size={24} className={statusIcons[booking.status].color.split(' ')[0]} />
+                      <div className="flex items-center gap-4 border-t border-zinc-100 pt-5 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0">
+                        <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${statusIcons[booking.status].color.replace('border', '').replace('text', 'text').replace('bg', 'bg')}`}>
+                          <StatusIcon size={24} />
                         </div>
                         <div className="text-sm">
-                          <p className="font-bold text-zinc-900 capitalize">{booking.status}</p>
-                          <p className="text-zinc-500">
+                          <p className="font-semibold text-zinc-900 capitalize text-base">{booking.status}</p>
+                          <p className="text-zinc-500 text-xs mt-0.5">
                             {booking.paymentMethod ? `${booking.paymentMethod} • ` : ''}
                             {booking.paymentStatus}
                           </p>
                           {booking.status === 'completed' && booking.finalCost && (
-                            <p className="mt-1 text-xs font-bold text-emerald-600">
+                            <p className="mt-1 text-xs font-semibold text-emerald-600">
                               Final Cost: ₹{booking.finalCost}
                             </p>
                           )}
                           {booking.status === 'cancelled' && booking.cancellationReason && (
-                            <p className="mt-1 text-xs italic text-red-400">
+                            <p className="mt-1 text-xs text-red-500">
                               Reason: {booking.cancellationReason}
                             </p>
                           )}
@@ -388,14 +405,14 @@ export default function BookingsHistory() {
             </AnimatePresence>
           </div>
         ) : (
-          <div className="flex h-64 flex-col items-center justify-center rounded-3xl border-2 border-dashed border-zinc-200 bg-white p-8 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
+          <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-zinc-50 text-zinc-400 border border-zinc-100">
               <History size={32} />
             </div>
-            <h3 className="mt-4 text-lg font-bold text-zinc-900">
+            <h3 className="mt-4 text-lg font-semibold text-zinc-900 tracking-tight">
               {statusFilter !== 'all' || categoryFilter !== 'all' ? 'No matching bookings' : 'No bookings yet'}
             </h3>
-            <p className="mt-2 text-zinc-500">
+            <p className="mt-1 text-sm text-zinc-500">
               {statusFilter !== 'all' || categoryFilter !== 'all' 
                 ? 'Try adjusting your filters to find what you are looking for.' 
                 : 'Your repair history will appear here once you book a service.'}
@@ -403,7 +420,7 @@ export default function BookingsHistory() {
             {(statusFilter !== 'all' || categoryFilter !== 'all') && (
               <button
                 onClick={() => { setStatusFilter('all'); setCategoryFilter('all'); }}
-                className="mt-4 text-sm font-bold text-emerald-600 hover:text-emerald-700"
+                className="mt-4 text-sm font-semibold text-zinc-900 hover:text-emerald-600 transition-colors"
               >
                 Clear all filters
               </button>
@@ -421,58 +438,58 @@ export default function BookingsHistory() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => { setCancellingBooking(null); setCancellationReason(''); }}
-              className="absolute inset-0 bg-zinc-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-zinc-950/80 backdrop-blur-sm"
             />
             <motion.div
               drag
               dragMomentum={false}
               dragElastic={0.05}
-              whileDrag={{ scale: 1.02, boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)" }}
+              whileDrag={{ scale: 1.02, boxShadow: "0 25px 50px -12px rgb(0 0 0 / 0.25)" }}
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white p-6 shadow-2xl"
+              className="relative w-full max-w-md overflow-hidden rounded-xl bg-white p-6 shadow-xl border border-zinc-200"
             >
-              <div className="flex items-center justify-between mb-6 cursor-grab active:cursor-grabbing bg-zinc-50/50 -m-6 p-6 mb-6 select-none">
+              <div className="flex items-center justify-between mb-5 cursor-grab active:cursor-grabbing bg-zinc-50/80 backdrop-blur-md -m-6 p-5 mb-6 select-none border-b border-zinc-100">
                 <div className="flex items-center gap-2 pointer-events-none">
                   <GripHorizontal size={16} className="text-zinc-400" />
-                  <h3 className="text-xl font-bold text-zinc-900">Cancel Booking?</h3>
+                  <h3 className="text-base font-semibold text-zinc-900 tracking-tight">Cancel Booking</h3>
                 </div>
                 <button
                   onClick={() => { setCancellingBooking(null); setCancellationReason(''); }}
-                  className="rounded-full p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900"
+                  className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-900 transition-colors"
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
               </div>
               
-              <p className="text-zinc-600 mb-6">
-                Are you sure you want to cancel your <span className="font-bold text-zinc-900">{cancellingBooking.category}</span> service on <span className="font-bold text-zinc-900">{cancellingBooking.date}</span>? This action cannot be undone.
+              <p className="text-zinc-600 text-sm mb-5 leading-relaxed">
+                Are you sure you want to cancel your <span className="font-semibold text-zinc-900">{cancellingBooking.category}</span> service on <span className="font-semibold text-zinc-900">{cancellingBooking.date}</span>? This action cannot be undone.
               </p>
 
-              <div className="mb-8 space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">Reason for cancellation</label>
+              <div className="mb-6 space-y-2">
+                <label className="text-xs font-semibold text-zinc-700">Reason for cancellation</label>
                 <textarea
                   value={cancellationReason}
                   onChange={(e) => setCancellationReason(e.target.value)}
                   placeholder="Tell us why you are cancelling..."
-                  className="w-full min-h-[100px] rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all resize-none"
+                  className="w-full min-h-[100px] rounded-lg border border-zinc-200 bg-white p-3 text-sm outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-all resize-none"
                 />
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 <button
                   onClick={() => { setCancellingBooking(null); setCancellationReason(''); }}
-                  className="flex-1 rounded-2xl border border-zinc-200 py-3 text-sm font-bold text-zinc-600 hover:bg-zinc-50 transition-colors"
+                  className="flex-1 rounded-lg border border-zinc-200 py-2.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-50 transition-colors active:scale-[0.98]"
                 >
                   Keep Booking
                 </button>
                 <button
                   disabled={isCancelling}
                   onClick={handleCancelBooking}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-red-600 py-3 text-sm font-bold text-white hover:bg-red-700 transition-colors disabled:opacity-50"
+                  className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition-all disabled:opacity-50 active:scale-[0.98] shadow-sm"
                 >
-                  {isCancelling ? <Loader2 className="animate-spin" size={18} /> : 'Yes, Cancel'}
+                  {isCancelling ? <Loader2 className="animate-spin" size={16} /> : 'Yes, Cancel'}
                 </button>
               </div>
             </motion.div>
@@ -488,63 +505,63 @@ export default function BookingsHistory() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => { setCompletingBooking(null); setTimeConsumed(1); }}
-              className="absolute inset-0 bg-zinc-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-zinc-950/80 backdrop-blur-sm"
             />
             <motion.div
               drag
               dragMomentum={false}
               dragElastic={0.05}
-              whileDrag={{ scale: 1.02, boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)" }}
+              whileDrag={{ scale: 1.02, boxShadow: "0 25px 50px -12px rgb(0 0 0 / 0.25)" }}
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white p-6 shadow-2xl"
+              className="relative w-full max-w-md overflow-hidden rounded-xl bg-white p-6 shadow-xl border border-zinc-200"
             >
-              <div className="flex items-center justify-between mb-6 cursor-grab active:cursor-grabbing bg-zinc-50/50 -m-6 p-6 mb-6 select-none">
+              <div className="flex items-center justify-between mb-5 cursor-grab active:cursor-grabbing bg-zinc-50/80 backdrop-blur-md -m-6 p-5 mb-6 select-none border-b border-zinc-100">
                 <div className="flex items-center gap-2 pointer-events-none">
                   <GripHorizontal size={16} className="text-zinc-400" />
-                  <h3 className="text-xl font-bold text-zinc-900">Complete Service</h3>
+                  <h3 className="text-base font-semibold text-zinc-900 tracking-tight">Complete Service</h3>
                 </div>
                 <button
                   onClick={() => { setCompletingBooking(null); setTimeConsumed(1); }}
-                  className="rounded-full p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900"
+                  className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-900 transition-colors"
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
               </div>
               
-              <p className="text-zinc-600 mb-6">
-                Simulate completing the <span className="font-bold text-zinc-900">{completingBooking.category}</span> service. Enter the time consumed by the technician to calculate the final cost.
+              <p className="text-zinc-600 text-sm mb-5 leading-relaxed">
+                Simulate completing the <span className="font-semibold text-zinc-900">{completingBooking.category}</span> service. Enter the time consumed by the technician to calculate the final cost.
               </p>
 
-              <div className="mb-8 space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">Time Consumed (Hours)</label>
+              <div className="mb-6 space-y-2">
+                <label className="text-xs font-semibold text-zinc-700">Time Consumed (Hours)</label>
                 <input
                   type="number"
                   min="1"
                   step="0.5"
                   value={timeConsumed}
                   onChange={(e) => setTimeConsumed(parseFloat(e.target.value) || 0)}
-                  className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                  className="w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm font-medium outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-all"
                 />
-                <p className="text-[10px] text-zinc-500 mt-2">
+                <p className="text-xs text-zinc-500 mt-1">
                   Base price covers the first hour. Additional hours are charged at ₹200/hr.
                 </p>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 <button
                   onClick={() => { setCompletingBooking(null); setTimeConsumed(1); }}
-                  className="flex-1 rounded-2xl border border-zinc-200 py-3 text-sm font-bold text-zinc-600 hover:bg-zinc-50 transition-colors"
+                  className="flex-1 rounded-lg border border-zinc-200 py-2.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-50 transition-colors active:scale-[0.98]"
                 >
                   Cancel
                 </button>
                 <button
                   disabled={isCompleting}
                   onClick={handleCompleteBooking}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-3 text-sm font-bold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                  className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-all disabled:opacity-50 active:scale-[0.98] shadow-sm"
                 >
-                  {isCompleting ? <Loader2 className="animate-spin" size={18} /> : 'Complete'}
+                  {isCompleting ? <Loader2 className="animate-spin" size={16} /> : 'Complete'}
                 </button>
               </div>
             </motion.div>

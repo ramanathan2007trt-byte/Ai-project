@@ -132,6 +132,17 @@ service cloud.firestore {
              data.price is number && data.price >= 0 &&
              data.distance is number &&
              data.paymentStatus in ['paid', 'pending'] &&
+             (!('address' in data) || (data.address is string && data.address.size() > 0 && data.address.size() <= 500)) &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() > 0 && data.phone.size() <= 20)) &&
+             (!('companyFee' in data) || (data.companyFee is number && data.companyFee >= 0)) &&
+             (!('technicianEarnings' in data) || (data.technicianEarnings is number && data.technicianEarnings >= 0)) &&
+             (!('paymentMethod' in data) || data.paymentMethod in ['Credit Card', 'Debit Card', 'Cash on Delivery']) &&
+             (!('isFake' in data) || data.isFake is bool) &&
+             (!('fakeReason' in data) || data.fakeReason is string) &&
+             (!('cancellationReason' in data) || data.cancellationReason is string) &&
+             (!('timeConsumed' in data) || data.timeConsumed is number) &&
+             (!('finalCost' in data) || data.finalCost is number) &&
+             (!('hasFeedback' in data) || data.hasFeedback is bool) &&
              data.createdAt is timestamp;
     }
 
@@ -164,7 +175,7 @@ service cloud.firestore {
     }
 
     match /bookings/{bookingId} {
-      allow read: if isAuthenticated() && (request.auth.uid == resource.data.userId || request.auth.uid == resource.data.technicianId || isAdmin());
+      allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId && isValidBooking(request.resource.data);
       allow update: if isAuthenticated() && (request.auth.uid == resource.data.userId || request.auth.uid == resource.data.technicianId || isAdmin()) && isValidBooking(request.resource.data);
     }

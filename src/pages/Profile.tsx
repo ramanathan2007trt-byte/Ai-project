@@ -92,7 +92,19 @@ export default function Profile() {
   const handleSeedData = async () => {
     setSeeding(true);
     try {
-      await seedDatabase();
+      const getUserLocation = () => new Promise<{lat: number, lng: number}>((resolve) => {
+        if ('geolocation' in navigator) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+            () => resolve({ lat: 19.0760, lng: 72.8777 }) // Fallback to Mumbai
+          );
+        } else {
+          resolve({ lat: 19.0760, lng: 72.8777 });
+        }
+      });
+      
+      const location = await getUserLocation();
+      await seedDatabase(location);
       toast.success('Database seeded successfully!');
     } catch (error) {
       toast.error('Failed to seed database');
@@ -104,23 +116,23 @@ export default function Profile() {
   if (loadingAuth || loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-zinc-900" />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8 flex items-center gap-4"
+        className="mb-10 flex items-center gap-4"
       >
         <Link
           to="/"
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-zinc-600 shadow-sm transition-all hover:bg-zinc-50 hover:text-zinc-900"
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 shadow-sm transition-all hover:bg-zinc-50 hover:text-zinc-900"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={18} />
         </Link>
         <h1 className="text-3xl font-bold tracking-tight text-zinc-900">My Profile</h1>
       </motion.div>
@@ -132,8 +144,8 @@ export default function Profile() {
           transition={{ delay: 0.1 }}
           className="md:col-span-1"
         >
-          <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white p-6 text-center shadow-sm">
-            <div className="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full border-4 border-emerald-50 bg-zinc-100 shadow-inner">
+          <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
+            <div className="mx-auto mb-6 h-24 w-24 overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50 shadow-sm">
               {user?.photoURL ? (
                 <img
                   src={user.photoURL}
@@ -148,7 +160,7 @@ export default function Profile() {
               )}
             </div>
             <h2 className="text-xl font-bold text-zinc-900">{formData.name}</h2>
-            <p className="text-sm text-zinc-500">{formData.email}</p>
+            <p className="mt-1 text-sm font-medium text-zinc-500">{formData.email}</p>
           </div>
         </motion.div>
 
@@ -158,72 +170,72 @@ export default function Profile() {
           transition={{ delay: 0.2 }}
           className="md:col-span-2"
         >
-          <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
-            <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-8 rounded-xl border border-zinc-200 bg-white p-8 shadow-sm">
+            <div className="space-y-6">
               <div>
-                <label htmlFor="name" className="mb-1 block text-sm font-semibold text-zinc-700">
+                <label htmlFor="name" className="mb-2 block text-sm font-semibold text-zinc-700">
                   Full Name
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
                   <input
                     id="name"
                     type="text"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-10 pr-4 text-zinc-900 transition-all focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10"
+                    className="w-full rounded-lg border border-zinc-200 bg-zinc-50 py-2.5 pl-11 pr-4 text-sm font-medium text-zinc-900 transition-all focus:border-zinc-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
                     placeholder="Enter your full name"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="email" className="mb-1 block text-sm font-semibold text-zinc-700">
+                <label htmlFor="email" className="mb-2 block text-sm font-semibold text-zinc-700">
                   Email Address
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
                   <input
                     id="email"
                     type="email"
                     disabled
                     value={formData.email}
-                    className="w-full cursor-not-allowed rounded-xl border border-zinc-200 bg-zinc-100 py-2.5 pl-10 pr-4 text-zinc-500"
+                    className="w-full cursor-not-allowed rounded-lg border border-zinc-200 bg-zinc-100 py-2.5 pl-11 pr-4 text-sm font-medium text-zinc-500"
                   />
                 </div>
-                <p className="mt-1 text-xs text-zinc-400">Email cannot be changed</p>
+                <p className="mt-2 text-xs font-medium text-zinc-400">Email cannot be changed</p>
               </div>
 
               <div>
-                <label htmlFor="phone" className="mb-1 block text-sm font-semibold text-zinc-700">
+                <label htmlFor="phone" className="mb-2 block text-sm font-semibold text-zinc-700">
                   Phone Number
                 </label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
                   <input
                     id="phone"
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-10 pr-4 text-zinc-900 transition-all focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10"
+                    className="w-full rounded-lg border border-zinc-200 bg-zinc-50 py-2.5 pl-11 pr-4 text-sm font-medium text-zinc-900 transition-all focus:border-zinc-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
                     placeholder="Enter your phone number"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="address" className="mb-1 block text-sm font-semibold text-zinc-700">
+                <label htmlFor="address" className="mb-2 block text-sm font-semibold text-zinc-700">
                   Physical Address
                 </label>
                 <div className="relative">
-                  <MapPin className="absolute left-3 top-3 text-zinc-400" size={18} />
+                  <MapPin className="absolute left-3.5 top-3 text-zinc-400" size={18} />
                   <textarea
                     id="address"
                     rows={3}
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-10 pr-4 text-zinc-900 transition-all focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10"
+                    className="w-full rounded-lg border border-zinc-200 bg-zinc-50 py-2.5 pl-11 pr-4 text-sm font-medium text-zinc-900 transition-all focus:border-zinc-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
                     placeholder="Enter your full address"
                   />
                 </div>
@@ -233,13 +245,13 @@ export default function Profile() {
             <button
               type="submit"
               disabled={saving}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 font-bold text-white transition-all hover:bg-emerald-700 hover:shadow-lg disabled:opacity-50 active:scale-[0.98]"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-semibold text-white transition-all hover:bg-zinc-800 active:scale-[0.98] disabled:opacity-50 shadow-sm"
             >
               {saving ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
                 <>
-                  <Save size={20} />
+                  <Save size={16} />
                   <span>Save Changes</span>
                 </>
               )}
@@ -252,25 +264,25 @@ export default function Profile() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="mt-8 space-y-4 rounded-2xl border-2 border-dashed border-emerald-200 bg-emerald-50/50 p-8"
+              className="mt-6 space-y-4 rounded-xl border border-emerald-200 bg-emerald-50/50 p-6 shadow-sm"
             >
-              <div className="flex items-center gap-3 text-emerald-700">
-                <Database size={24} />
-                <h3 className="text-xl font-bold">Admin Controls</h3>
+              <div className="flex items-center gap-2 text-emerald-800">
+                <Database size={18} />
+                <h3 className="text-base font-semibold tracking-tight">Admin Controls</h3>
               </div>
-              <p className="text-sm text-emerald-600">
+              <p className="text-sm font-medium text-emerald-700/80 leading-relaxed">
                 Populate the database with mock technicians and service data for testing.
               </p>
               <button
                 onClick={handleSeedData}
                 disabled={seeding}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 font-bold text-white transition-all hover:bg-emerald-700 hover:shadow-lg disabled:opacity-50 active:scale-[0.98]"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white transition-all hover:bg-emerald-700 active:scale-[0.98] disabled:opacity-50 shadow-sm"
               >
                 {seeding ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
                   <>
-                    <Sparkles size={20} />
+                    <Sparkles size={16} />
                     <span>Seed Mock Data</span>
                   </>
                 )}

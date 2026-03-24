@@ -74,9 +74,9 @@ export default function Tracking() {
 
   if (loading) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-zinc-50">
-        <Loader2 className="animate-spin text-emerald-600" size={48} />
-        <p className="text-zinc-500">Connecting to technician's GPS...</p>
+      <div className="flex h-screen flex-col items-center justify-center gap-5 bg-zinc-50">
+        <Loader2 className="animate-spin text-zinc-900" size={48} />
+        <p className="text-zinc-500 font-medium tracking-wide">Connecting to technician's GPS...</p>
       </div>
     );
   }
@@ -86,28 +86,28 @@ export default function Tracking() {
   return (
     <div className="flex h-[calc(100vh-64px)] flex-col overflow-hidden bg-zinc-50 lg:flex-row">
       {/* Sidebar Info */}
-      <div className="z-10 w-full overflow-y-auto border-b border-zinc-200 bg-white p-6 shadow-xl lg:h-full lg:w-96 lg:border-b-0 lg:border-r">
+      <div className="z-10 w-full overflow-y-auto border-b border-zinc-200 bg-white p-8 shadow-2xl lg:h-full lg:w-[420px] lg:border-b-0 lg:border-r">
         <Link
           to="/history"
-          className="mb-6 flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-zinc-900"
+          className="mb-8 flex items-center gap-2.5 text-sm font-bold text-zinc-500 hover:text-zinc-900 transition-colors"
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={18} />
           <span>Back to Bookings</span>
         </Link>
 
-        <div className="mb-8">
+        <div className="mb-10">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-zinc-900">Live Tracking</h1>
-            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-600">
+            <h1 className="text-3xl font-extrabold text-zinc-900 tracking-tight">Live Tracking</h1>
+            <span className="rounded-xl bg-emerald-50 border border-emerald-200 px-3.5 py-1.5 text-[11px] font-black uppercase tracking-widest text-emerald-700 shadow-sm">
               On the way
             </span>
           </div>
-          <p className="mt-1 text-sm text-zinc-500">Arriving in approx. 15 mins</p>
+          <p className="mt-2 text-sm font-medium text-zinc-500">Arriving in approx. 15 mins</p>
         </div>
 
-        <div className="mb-8 rounded-3xl border border-zinc-100 bg-zinc-50 p-5">
-          <div className="flex items-center gap-4">
-            <div className="h-16 w-16 overflow-hidden rounded-2xl bg-white shadow-sm">
+        <div className="mb-10 rounded-xl border border-zinc-200 bg-zinc-50/50 p-6 shadow-sm">
+          <div className="flex items-center gap-5">
+            <div className="h-16 w-16 overflow-hidden rounded-xl bg-white shadow-sm border border-zinc-100">
               <img
                 src={`https://picsum.photos/seed/${technician.id}/200/200`}
                 alt={technician.name}
@@ -117,70 +117,70 @@ export default function Tracking() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-zinc-900">{technician.name}</h3>
+                <h3 className="text-lg font-bold text-zinc-900">{technician.name}</h3>
                 {technician.verified && <ShieldCheck size={16} className="text-emerald-600" />}
               </div>
-              <div className="flex items-center gap-1 text-sm text-zinc-500">
-                <Star size={14} className="fill-amber-400 text-amber-400" />
+              <div className="flex items-center gap-1.5 text-sm text-zinc-500 mt-1">
+                <Star size={14} className="fill-amber-500 text-amber-500" />
                 <span className="font-semibold text-zinc-700">{technician.rating}</span>
-                <span>• {technician.category}</span>
+                <span className="font-medium">• {technician.category}</span>
               </div>
             </div>
           </div>
 
           <div className="mt-6 flex gap-3">
-            <button className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-zinc-900 py-3 text-sm font-bold text-white transition-all hover:bg-zinc-800 active:scale-95">
-              <Phone size={18} />
+            <button className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-semibold text-white transition-all hover:bg-zinc-800 active:scale-[0.98] shadow-sm">
+              <Phone size={16} />
               <span>Call</span>
             </button>
-            <button className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white py-3 text-sm font-bold text-zinc-600 transition-all hover:bg-zinc-50 active:scale-95">
-              <MessageSquare size={18} />
+            <button className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white py-2.5 text-sm font-semibold text-zinc-600 transition-all hover:bg-zinc-50 hover:border-zinc-300 active:scale-[0.98] shadow-sm">
+              <MessageSquare size={16} />
               <span>Chat</span>
             </button>
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="flex items-start gap-4">
-            <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-              <Navigation size={16} />
+            <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm">
+              <Navigation size={18} />
             </div>
             <div>
-              <p className="text-sm font-bold text-zinc-900">Technician Location</p>
-              <p className="text-xs text-zinc-500">Moving along Main Street</p>
+              <p className="text-sm font-semibold text-zinc-900">Technician Location</p>
+              <p className="text-xs font-medium text-zinc-500 mt-0.5">Moving along Main Street</p>
             </div>
           </div>
           <div className="flex items-start gap-4">
-            <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
-              <MapPin size={16} />
+            <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-500 border border-zinc-200 shadow-sm">
+              <MapPin size={18} />
             </div>
             <div>
-              <p className="text-sm font-bold text-zinc-900">Your Destination</p>
-              <p className="text-xs text-zinc-500">Home Address</p>
+              <p className="text-sm font-semibold text-zinc-900">Your Destination</p>
+              <p className="text-xs font-medium text-zinc-500 mt-0.5">Home Address</p>
             </div>
           </div>
         </div>
 
         {/* Demo Simulation Control */}
-        <div className="mt-12 rounded-2xl border-2 border-dashed border-emerald-200 bg-emerald-50/50 p-4">
-          <h4 className="text-xs font-bold uppercase tracking-widest text-emerald-700">Demo Simulation</h4>
-          <p className="mt-1 text-xs text-emerald-600">Simulate the technician's real-time movement on the map.</p>
+        <div className="mt-10 rounded-xl border border-emerald-200 bg-emerald-50/50 p-6 shadow-sm">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-emerald-800">Demo Simulation</h4>
+          <p className="mt-2 text-xs font-medium text-emerald-600/80 leading-relaxed">Simulate the technician's real-time movement on the map.</p>
           <button
             onClick={() => setSimulating(!simulating)}
-            className={`mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold transition-all active:scale-95 ${
+            className={`mt-4 flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition-all active:scale-[0.98] shadow-sm ${
               simulating 
-                ? 'bg-red-100 text-red-700 hover:bg-red-200' 
-                : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-200'
+                ? 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100' 
+                : 'bg-emerald-600 text-white hover:bg-emerald-700'
             }`}
           >
             {simulating ? (
               <>
-                <Square size={18} fill="currentColor" />
+                <Square size={16} fill="currentColor" />
                 <span>Stop Simulation</span>
               </>
             ) : (
               <>
-                <Play size={18} fill="currentColor" />
+                <Play size={16} fill="currentColor" />
                 <span>Start Simulation</span>
               </>
             )}
@@ -189,14 +189,14 @@ export default function Tracking() {
       </div>
 
       {/* Map View */}
-      <div className="relative min-h-[350px] flex-1 bg-zinc-200 p-4 lg:p-8">
+      <div className="relative min-h-[400px] flex-1 bg-zinc-200 p-0 lg:p-0">
         <TrackingMap technician={technician} />
         
         {/* Floating Overlay */}
-        <div className="absolute bottom-10 left-1/2 z-20 -translate-x-1/2 rounded-2xl bg-zinc-900/90 px-6 py-3 text-sm font-medium text-white shadow-2xl backdrop-blur-md">
+        <div className="absolute bottom-8 left-1/2 z-20 -translate-x-1/2 rounded-xl bg-zinc-950/90 px-5 py-3 text-sm font-semibold text-white shadow-xl backdrop-blur-xl border border-zinc-800">
           <div className="flex items-center gap-3">
-            <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-            <span>GPS Signal Active • Real-time Tracking</span>
+            <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+            <span className="tracking-wide">GPS Signal Active • Real-time Tracking</span>
           </div>
         </div>
       </div>

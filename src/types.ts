@@ -40,8 +40,12 @@ export interface Booking {
   category: string;
   date: string;
   time: string;
+  address?: string;
+  phone?: string;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   price: number;
+  companyFee?: number;
+  technicianEarnings?: number;
   distance: number;
   paymentStatus: 'paid' | 'pending' | 'unpaid';
   paymentMethod?: 'Credit Card' | 'Debit Card' | 'Cash on Delivery';
