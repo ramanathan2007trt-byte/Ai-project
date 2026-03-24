@@ -1,0 +1,9 @@
+{
+	"appId": "com.fixit.app",
+	"appName": "FixIt Near Me",
+	"webDir": "dist",
+	"packageClassList": [
+		"SplashScreenPlugin",
+		"StatusBarPlugin"
+	]
+}
