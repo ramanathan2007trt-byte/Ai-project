@@ -13,23 +13,20 @@ import {
   Power, 
   PowerOff,
   Loader2,
-  AlertCircle,
   ChevronRight,
   TrendingUp,
   Star,
   IndianRupee,
   Calendar
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import toast from 'react-hot-toast';
 
 export default function TechnicianDashboard() {
   const [user] = useAuthState(auth);
   const [technician, setTechnician] = useState<Technician | null>(null);
-  const [availableRequests, setAvailableRequests] = useState<Booking[]>([]);
   const [myBookings, setMyBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'available' | 'my-jobs'>('available');
 
   useEffect(() => {
     if (!user) return;
@@ -52,18 +49,6 @@ export default function TechnicianDashboard() {
   useEffect(() => {
     if (!user || !technician) return;
 
-    // Fetch available requests (pending and matching category)
-    const availableQuery = query(
-      collection(db, 'bookings'),
-      where('status', '==', 'pending'),
-      where('category', '==', technician.category)
-    );
-
-    const unsubscribeAvailable = onSnapshot(availableQuery, (snapshot) => {
-      const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
-      setAvailableRequests(requests);
-    });
-
     // Fetch my bookings
     const myBookingsQuery = query(
       collection(db, 'bookings'),
@@ -76,7 +61,6 @@ export default function TechnicianDashboard() {
     });
 
     return () => {
-      unsubscribeAvailable();
       unsubscribeMy();
     };
   }, [user, technician]);
@@ -90,20 +74,6 @@ export default function TechnicianDashboard() {
       toast.success(`You are now ${!technician.online ? 'Online' : 'Offline'}`);
     } catch (error) {
       toast.error('Failed to update status');
-    }
-  };
-
-  const acceptRequest = async (bookingId: string) => {
-    if (!user) return;
-    try {
-      await updateDoc(doc(db, 'bookings', bookingId), {
-        status: 'confirmed',
-        technicianId: user.uid,
-        acceptedAt: serverTimestamp()
-      });
-      toast.success('Request accepted! Go to My Jobs to manage it.');
-    } catch (error) {
-      toast.error('Failed to accept request');
     }
   };
 
@@ -136,10 +106,6 @@ export default function TechnicianDashboard() {
       {/* Header Section */}
       <div className="mb-12 flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between border-b border-zinc-800 pb-8">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className={`h-2 w-2 rounded-full animate-pulse ${technician.online ? 'bg-emerald-500' : 'bg-red-500'}`} />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">System Status: {technician.online ? 'Active' : 'Standby'}</span>
-          </div>
           <h1 className="text-6xl font-black tracking-tighter text-white uppercase italic leading-none">
             Control <span className="text-zinc-700">Center</span>
           </h1>
@@ -186,166 +152,66 @@ export default function TechnicianDashboard() {
             ))}
           </div>
 
-          {/* Tabs */}
-          <div className="flex border-b-2 border-zinc-800">
-            <button
-              onClick={() => setActiveTab('available')}
-              className={`relative px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] transition-all ${
-                activeTab === 'available' 
-                  ? 'text-white' 
-                  : 'text-zinc-600 hover:text-zinc-400'
-              }`}
-            >
-              Available Queue
-              {activeTab === 'available' && (
-                <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-500" />
-              )}
-              {availableRequests.length > 0 && (
-                <span className="ml-2 inline-block text-emerald-500">[{availableRequests.length}]</span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('my-jobs')}
-              className={`relative px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] transition-all ${
-                activeTab === 'my-jobs' 
-                  ? 'text-white' 
-                  : 'text-zinc-600 hover:text-zinc-400'
-              }`}
-            >
-              Active Assignments
-              {activeTab === 'my-jobs' && (
-                <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-500" />
-              )}
-            </button>
-          </div>
-
           {/* Content Area */}
-          <AnimatePresence mode="wait">
-            {activeTab === 'available' ? (
-              <motion.div
-                key="available"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="divide-y-2 divide-zinc-800 border-2 border-zinc-800 bg-zinc-900"
-              >
-                {availableRequests.length > 0 ? (
-                  availableRequests.map((request) => (
-                    <div key={request.id} className="group flex flex-col sm:flex-row sm:items-center justify-between p-8 transition-all hover:bg-zinc-800/50">
-                      <div className="space-y-6">
-                        <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 border-2 border-zinc-800 flex items-center justify-center bg-zinc-950">
-                            <User size={20} className="text-zinc-600" />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600">Request Type</span>
-                              <span className="h-1 w-1 rounded-full bg-zinc-800" />
-                              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">{request.category}</span>
-                            </div>
-                            <h3 className="text-2xl font-black text-white uppercase tracking-tight mt-1">Incoming Assignment</h3>
-                          </div>
+          <div className="divide-y-2 divide-zinc-800 border-2 border-zinc-800 bg-zinc-900">
+            <div className="border-b-2 border-zinc-800 bg-zinc-950 px-8 py-4">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-white">Active Assignments</h2>
+            </div>
+            {myBookings.length > 0 ? (
+              myBookings.map((booking) => (
+                <div key={booking.id} className="p-8 transition-all hover:bg-zinc-800/50">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-12">
+                    <div className="space-y-6 flex-1">
+                      <div className="flex items-center gap-4">
+                        <div className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest border-2 ${
+                          booking.status === 'completed' ? 'bg-zinc-800 text-zinc-400 border-zinc-800' :
+                          booking.status === 'confirmed' ? 'bg-emerald-500 text-zinc-950 border-emerald-500' :
+                          'bg-transparent text-zinc-600 border-zinc-800'
+                        }`}>
+                          {booking.status}
                         </div>
-                        
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-12">
-                          <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1">Schedule</p>
-                            <p className="text-xs font-bold text-zinc-300 uppercase">{request.date} // {request.time}</p>
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1">Location</p>
-                            <p className="text-xs font-bold text-zinc-300 uppercase truncate max-w-[150px]">{request.address}</p>
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1">Payout</p>
-                            <p className="text-xs font-bold text-emerald-500 uppercase">₹{request.price}</p>
-                          </div>
-                        </div>
+                        <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
+                          REF: {booking.id.slice(0, 8)}
+                        </span>
                       </div>
 
-                      <button
-                        onClick={() => acceptRequest(request.id)}
-                        className="mt-8 sm:mt-0 border-2 border-emerald-500 bg-transparent px-10 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 transition-all hover:bg-emerald-500 hover:text-zinc-950 active:scale-95"
-                      >
-                        Accept Assignment
-                      </button>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-12">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1">Date</p>
+                          <p className="text-xs font-bold text-zinc-300 uppercase">{booking.date}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1">Time</p>
+                          <p className="text-xs font-bold text-zinc-300 uppercase">{booking.time}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1">Contact</p>
+                          <p className="text-xs font-bold text-zinc-300 uppercase">{booking.phone}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1">Address</p>
+                          <p className="text-xs font-bold text-zinc-300 uppercase truncate">{booking.address}</p>
+                        </div>
+                      </div>
                     </div>
-                  ))
-                ) : (
-                  <div className="flex h-80 flex-col items-center justify-center p-8 text-center bg-zinc-950">
-                    <div className="mb-6 text-zinc-800">
-                      <AlertCircle size={64} strokeWidth={1} />
+
+                    <div className="sm:text-right border-l-2 border-zinc-800 sm:pl-12">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-2">Net Earnings</p>
+                      <p className="text-5xl font-black text-white tracking-tighter">₹{booking.technicianEarnings || 0}</p>
                     </div>
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Queue Empty</h3>
-                    <p className="mt-4 text-[10px] font-bold text-zinc-700 uppercase tracking-widest">No active requests detected in your sector</p>
                   </div>
-                )}
-              </motion.div>
+                </div>
+              ))
             ) : (
-              <motion.div
-                key="my-jobs"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="divide-y-2 divide-zinc-800 border-2 border-zinc-800 bg-zinc-900"
-              >
-                {myBookings.length > 0 ? (
-                  myBookings.map((booking) => (
-                    <div key={booking.id} className="p-8 transition-all hover:bg-zinc-800/50">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-12">
-                        <div className="space-y-6 flex-1">
-                          <div className="flex items-center gap-4">
-                            <div className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest border-2 ${
-                              booking.status === 'completed' ? 'bg-zinc-800 text-zinc-400 border-zinc-800' :
-                              booking.status === 'confirmed' ? 'bg-emerald-500 text-zinc-950 border-emerald-500' :
-                              'bg-transparent text-zinc-600 border-zinc-800'
-                            }`}>
-                              {booking.status}
-                            </div>
-                            <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
-                              REF: {booking.id.slice(0, 8)}
-                            </span>
-                          </div>
-
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-12">
-                            <div>
-                              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1">Date</p>
-                              <p className="text-xs font-bold text-zinc-300 uppercase">{booking.date}</p>
-                            </div>
-                            <div>
-                              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1">Time</p>
-                              <p className="text-xs font-bold text-zinc-300 uppercase">{booking.time}</p>
-                            </div>
-                            <div>
-                              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1">Contact</p>
-                              <p className="text-xs font-bold text-zinc-300 uppercase">{booking.phone}</p>
-                            </div>
-                            <div>
-                              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1">Address</p>
-                              <p className="text-xs font-bold text-zinc-300 uppercase truncate">{booking.address}</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="sm:text-right border-l-2 border-zinc-800 sm:pl-12">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-2">Net Earnings</p>
-                          <p className="text-5xl font-black text-white tracking-tighter">₹{booking.technicianEarnings || 0}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="flex h-80 flex-col items-center justify-center p-8 text-center bg-zinc-950">
-                    <div className="mb-6 text-zinc-800">
-                      <ClipboardList size={64} strokeWidth={1} />
-                    </div>
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">No Assignments</h3>
-                    <p className="mt-4 text-[10px] font-bold text-zinc-700 uppercase tracking-widest">Awaiting mission acceptance</p>
-                  </div>
-                )}
-              </motion.div>
+              <div className="flex h-80 flex-col items-center justify-center p-8 text-center bg-zinc-950">
+                <div className="mb-6 text-zinc-800">
+                  <ClipboardList size={64} strokeWidth={1} />
+                </div>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">No Assignments</h3>
+                <p className="mt-4 text-[10px] font-bold text-zinc-700 uppercase tracking-widest">Awaiting mission acceptance</p>
+              </div>
             )}
-          </AnimatePresence>
+          </div>
         </div>
 
         {/* Sidebar Column */}
