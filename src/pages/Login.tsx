@@ -57,11 +57,11 @@ export default function Login() {
     }
   };
 
-  const handleGoogleLogin = async (role: 'user' | 'technician') => {
+  const handleGoogleLogin = async (role: 'user' | 'technician', forceSelect = false) => {
     setLoading(true);
     try {
       localStorage.setItem('pending_role', role);
-      await signInWithGoogle();
+      await signInWithGoogle(forceSelect);
     } catch (error) {
       console.error('Login error:', error);
       toast.error('Failed to sign in with Google');
@@ -180,6 +180,16 @@ export default function Login() {
                       </>
                     )}
                   </button>
+
+                  <div className="pt-2 text-center">
+                    <button
+                      onClick={() => handleGoogleLogin('user', true)}
+                      disabled={loading}
+                      className="text-xs font-bold text-zinc-400 hover:text-zinc-900 transition-colors"
+                    >
+                      Sign in with another Google account
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="mt-8 flex items-center gap-4">

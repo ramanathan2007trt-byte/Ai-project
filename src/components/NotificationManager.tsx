@@ -13,8 +13,15 @@ export default function NotificationManager() {
       try {
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
+          const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+          
+          if (!vapidKey) {
+            console.warn('FCM VAPID key is missing. Push notifications will not be fully functional. Please set VITE_FIREBASE_VAPID_KEY in your environment variables.');
+            return;
+          }
+
           const token = await getToken(messaging, {
-            vapidKey: 'BPHtZ9_0_6_0_6_0_6_0_6_0_6_0_6_0_6_0_6_0_6_0_6_0_6_0_6_0_6_0_6_0_6_0_6_0_6_0_6_0_6_0_6_0' // This is a placeholder, in a real app you'd get this from Firebase Console
+            vapidKey: vapidKey
           });
           
           if (token) {

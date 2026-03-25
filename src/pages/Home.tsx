@@ -87,52 +87,62 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-zinc-50 pb-20">
       {/* Hero Section */}
-      <section className="relative bg-zinc-950 py-24 text-white sm:py-32 overflow-hidden">
+      <section className="relative bg-white py-24 text-zinc-900 sm:py-32 overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000005_1px,transparent_1px),linear-gradient(to_bottom,#00000005_1px,transparent_1px)] bg-[size:40px_40px]" />
+          <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-emerald-50 blur-3xl opacity-50" />
+          <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-blue-50 blur-3xl opacity-50" />
         </div>
         
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center text-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mb-8 rounded-full bg-zinc-100 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 border border-zinc-200"
+            >
+              Verified Home Services
+            </motion.div>
+
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="max-w-4xl text-4xl font-bold tracking-tight sm:text-6xl"
+              className="max-w-4xl text-5xl font-black tracking-tighter sm:text-8xl leading-[0.9]"
             >
-              Professional Home Services, <br className="hidden sm:block" />
-              <span className="text-emerald-500">On Demand.</span>
+              Your home, <br className="hidden sm:block" />
+              <span className="text-emerald-500 italic">perfectly</span> handled.
             </motion.h1>
             
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="mt-6 max-w-2xl text-base text-zinc-400 font-medium"
+              className="mt-8 max-w-xl text-lg text-zinc-500 font-medium leading-relaxed"
             >
-              Connect with verified experts for repairs, maintenance, and installations. Fast, reliable, and transparent.
+              Connect with local experts for everything from quick fixes to major renovations. Simple, transparent, and trusted.
             </motion.p>
 
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="mt-12 flex w-full max-w-3xl flex-col gap-4 sm:flex-row"
+              className="mt-12 flex w-full max-w-3xl flex-col gap-4 sm:flex-row p-2 bg-white rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-100"
             >
               <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-300" size={20} />
                 <input
                   type="text"
-                  placeholder="Search for a service or professional..."
+                  placeholder="What do you need help with?"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-14 w-full rounded-xl bg-white/5 pl-12 pr-4 text-white placeholder:text-zinc-500 border border-white/10 outline-none transition-all focus:border-zinc-500 focus:bg-white/10 focus:ring-1 focus:ring-zinc-500 text-sm font-medium"
+                  className="h-16 w-full rounded-[24px] bg-zinc-50 pl-14 pr-6 text-zinc-900 placeholder:text-zinc-400 border-none outline-none transition-all focus:bg-zinc-100 text-sm font-bold"
                 />
               </div>
-              <div className="flex h-14 items-center gap-3 rounded-xl bg-white/5 px-5 border border-white/10">
+              <div className="flex h-16 items-center gap-4 rounded-[24px] bg-zinc-50 px-6 border-none">
                 <MapPin size={20} className="text-emerald-500" />
                 <div className="text-left">
-                  <p className="text-[11px] font-semibold text-zinc-500">Location</p>
-                  <p className="text-sm font-semibold text-zinc-200">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Location</p>
+                  <p className="text-sm font-bold text-zinc-900">
                     {userLocation ? 'Mumbai, India' : 'Detecting...'}
                   </p>
                 </div>
@@ -143,20 +153,20 @@ export default function Home() {
       </section>
 
       {/* Categories Bar */}
-      <div className="sticky top-16 z-40 border-b border-zinc-200 bg-white/80 backdrop-blur-xl">
+      <div className="sticky top-16 z-40 border-b border-zinc-100 bg-white/80 backdrop-blur-2xl">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3 overflow-x-auto py-4 scrollbar-hide">
+          <div className="flex items-center gap-4 overflow-x-auto py-6 scrollbar-hide">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`flex flex-shrink-0 items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 ${
+                className={`flex flex-shrink-0 items-center gap-2 rounded-full px-6 py-3 text-xs font-black uppercase tracking-widest transition-all duration-300 ${
                   selectedCategory === cat.id
-                    ? 'bg-zinc-900 text-white shadow-sm'
-                    : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900'
+                    ? 'bg-zinc-900 text-white shadow-xl shadow-zinc-200'
+                    : 'bg-zinc-50 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-100'
                 }`}
               >
-                <cat.icon size={16} />
+                <cat.icon size={14} />
                 <span>{cat.name}</span>
               </button>
             ))}
@@ -165,32 +175,52 @@ export default function Home() {
       </div>
 
       {/* Main Content */}
-      <main className="mx-auto mt-10 max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <main className="mx-auto mt-16 max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* How it Works */}
+        <section className="mb-24 grid grid-cols-1 gap-12 sm:grid-cols-3">
+          {[
+            { step: '01', title: 'Choose Service', desc: 'Select from our verified list of home experts.' },
+            { step: '02', title: 'Pick a Time', desc: 'Schedule a visit that fits your busy lifestyle.' },
+            { step: '03', title: 'Get it Fixed', desc: 'Relax while our pros handle the rest.' },
+          ].map((item) => (
+            <div key={item.step} className="group relative">
+              <span className="text-6xl font-black text-zinc-100 transition-colors group-hover:text-emerald-50">{item.step}</span>
+              <div className="absolute top-8 left-0">
+                <h3 className="text-lg font-black uppercase tracking-tight text-zinc-900">{item.title}</h3>
+                <p className="mt-1 text-sm text-zinc-500 font-medium">{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </section>
+
+        <div className="mb-12 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-xl font-semibold tracking-tight text-zinc-900">
-              {selectedCategory === 'all' ? 'Available Professionals' : `${CATEGORIES.find(c => c.id === selectedCategory)?.name} Professionals`}
+            <div className="flex items-center gap-2 mb-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Live Availability</span>
+            </div>
+            <h2 className="text-4xl font-black tracking-tighter text-zinc-900 uppercase italic">
+              {selectedCategory === 'all' ? 'Top Professionals' : `${CATEGORIES.find(c => c.id === selectedCategory)?.name} Experts`}
             </h2>
-            <p className="mt-1 text-sm text-zinc-500">Verified experts ready to help in your area</p>
           </div>
           
-          <div className="flex items-center gap-1 rounded-lg bg-zinc-100 p-1 border border-zinc-200">
+          <div className="flex items-center gap-1 rounded-full bg-zinc-100 p-1.5 border border-zinc-200">
             <button
               onClick={() => setViewMode('grid')}
-              className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
-                viewMode === 'grid' ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200' : 'text-zinc-500 hover:text-zinc-900'
+              className={`flex items-center gap-2 rounded-full px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all ${
+                viewMode === 'grid' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-400 hover:text-zinc-900'
               }`}
             >
-              <LayoutGrid size={16} />
+              <LayoutGrid size={14} />
               <span>Grid</span>
             </button>
             <button
               onClick={() => setViewMode('map')}
-              className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
-                viewMode === 'map' ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200' : 'text-zinc-500 hover:text-zinc-900'
+              className={`flex items-center gap-2 rounded-full px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all ${
+                viewMode === 'map' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-400 hover:text-zinc-900'
               }`}
             >
-              <MapIcon size={16} />
+              <MapIcon size={14} />
               <span>Map</span>
             </button>
           </div>

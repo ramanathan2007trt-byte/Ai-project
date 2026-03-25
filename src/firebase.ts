@@ -76,8 +76,16 @@ async function testConnection() {
 }
 testConnection();
 
-export const signInWithGoogle = async () => {
+export const signInWithGoogle = async (forceSelect = false) => {
   try {
+    if (forceSelect) {
+      googleProvider.setCustomParameters({
+        prompt: 'select_account'
+      });
+    } else {
+      googleProvider.setCustomParameters({});
+    }
+
     // On native platforms, signInWithPopup is not supported, use redirect
     if (isNative()) {
       await signInWithRedirect(auth, googleProvider);

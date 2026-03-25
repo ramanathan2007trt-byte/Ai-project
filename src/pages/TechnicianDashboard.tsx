@@ -131,204 +131,289 @@ export default function TechnicianDashboard() {
     { label: 'Total Jobs', value: technician.totalJobs || 0, icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
     { label: 'Rating', value: technician.rating || 'N/A', icon: Star, color: 'text-amber-600', bg: 'bg-amber-50' },
     { label: 'Earnings', value: `₹${myBookings.reduce((acc, b) => acc + (b.technicianEarnings || 0), 0)}`, icon: IndianRupee, color: 'text-blue-600', bg: 'bg-blue-50' },
-  ];
-
-  return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+  ];  return (
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 font-mono bg-zinc-950 min-h-screen text-zinc-400">
       {/* Header Section */}
-      <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-12 flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between border-b border-zinc-800 pb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900">Technician Dashboard</h1>
-          <p className="mt-1 text-sm font-medium text-zinc-500">Welcome back, {technician.name}</p>
+          <div className="flex items-center gap-2 mb-2">
+            <span className={`h-2 w-2 rounded-full animate-pulse ${technician.online ? 'bg-emerald-500' : 'bg-red-500'}`} />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">System Status: {technician.online ? 'Active' : 'Standby'}</span>
+          </div>
+          <h1 className="text-6xl font-black tracking-tighter text-white uppercase italic leading-none">
+            Control <span className="text-zinc-700">Center</span>
+          </h1>
+          <div className="mt-4 flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-zinc-600">
+            <span>Operator: {technician.name}</span>
+            <span className="h-1 w-1 rounded-full bg-zinc-800" />
+            <span>Sector: {technician.category}</span>
+            <span className="h-1 w-1 rounded-full bg-zinc-800" />
+            <span>Node: {user?.uid.slice(0, 8)}</span>
+          </div>
         </div>
         
         <button
           onClick={toggleOnlineStatus}
-          className={`flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold transition-all duration-300 shadow-sm ${
+          className={`group flex items-center gap-3 rounded-none border-2 px-10 py-5 text-[10px] font-black uppercase tracking-[0.3em] transition-all duration-500 ${
             technician.online 
-              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100' 
-              : 'bg-zinc-100 text-zinc-600 border border-zinc-200 hover:bg-zinc-200'
+              ? 'bg-emerald-500 text-zinc-950 border-emerald-500 hover:bg-emerald-400' 
+              : 'bg-transparent text-zinc-500 border-zinc-800 hover:border-zinc-600 hover:text-zinc-300'
           }`}
         >
-          {technician.online ? <Power size={18} /> : <PowerOff size={18} />}
-          <span>{technician.online ? 'Online & Available' : 'Currently Offline'}</span>
+          {technician.online ? <Power size={16} /> : <PowerOff size={16} />}
+          <span>{technician.online ? 'Go Offline' : 'Go Online'}</span>
         </button>
       </div>
 
-      {/* Stats Grid */}
-      <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {stats.map((stat) => (
-          <div key={stat.label} className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition-all hover:shadow-md">
-            <div className="flex items-center gap-4">
-              <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${stat.bg} ${stat.color}`}>
-                <stat.icon size={24} />
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Main Content Column */}
+        <div className="lg:col-span-3 space-y-8">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 gap-0 sm:grid-cols-3 border-2 border-zinc-800 bg-zinc-800">
+            {stats.map((stat) => (
+              <div key={stat.label} className="bg-zinc-900 p-8 border-r-2 border-zinc-800 last:border-r-0">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{stat.label}</span>
+                    <stat.icon size={14} className="text-zinc-700" />
+                  </div>
+                  <p className="text-5xl font-black text-white tracking-tighter">{stat.value}</p>
+                  <div className="h-1 w-full bg-zinc-800">
+                    <div className={`h-full bg-emerald-500 transition-all duration-1000 ${technician.online ? 'w-2/3' : 'w-0'}`} />
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-zinc-500">{stat.label}</p>
-                <p className="text-2xl font-bold text-zinc-900">{stat.value}</p>
+            ))}
+          </div>
+
+          {/* Tabs */}
+          <div className="flex border-b-2 border-zinc-800">
+            <button
+              onClick={() => setActiveTab('available')}
+              className={`relative px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] transition-all ${
+                activeTab === 'available' 
+                  ? 'text-white' 
+                  : 'text-zinc-600 hover:text-zinc-400'
+              }`}
+            >
+              Available Queue
+              {activeTab === 'available' && (
+                <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-500" />
+              )}
+              {availableRequests.length > 0 && (
+                <span className="ml-2 inline-block text-emerald-500">[{availableRequests.length}]</span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('my-jobs')}
+              className={`relative px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] transition-all ${
+                activeTab === 'my-jobs' 
+                  ? 'text-white' 
+                  : 'text-zinc-600 hover:text-zinc-400'
+              }`}
+            >
+              Active Assignments
+              {activeTab === 'my-jobs' && (
+                <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-500" />
+              )}
+            </button>
+          </div>
+
+          {/* Content Area */}
+          <AnimatePresence mode="wait">
+            {activeTab === 'available' ? (
+              <motion.div
+                key="available"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="divide-y-2 divide-zinc-800 border-2 border-zinc-800 bg-zinc-900"
+              >
+                {availableRequests.length > 0 ? (
+                  availableRequests.map((request) => (
+                    <div key={request.id} className="group flex flex-col sm:flex-row sm:items-center justify-between p-8 transition-all hover:bg-zinc-800/50">
+                      <div className="space-y-6">
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 border-2 border-zinc-800 flex items-center justify-center bg-zinc-950">
+                            <User size={20} className="text-zinc-600" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600">Request Type</span>
+                              <span className="h-1 w-1 rounded-full bg-zinc-800" />
+                              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">{request.category}</span>
+                            </div>
+                            <h3 className="text-2xl font-black text-white uppercase tracking-tight mt-1">Incoming Assignment</h3>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-12">
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1">Schedule</p>
+                            <p className="text-xs font-bold text-zinc-300 uppercase">{request.date} // {request.time}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1">Location</p>
+                            <p className="text-xs font-bold text-zinc-300 uppercase truncate max-w-[150px]">{request.address}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1">Payout</p>
+                            <p className="text-xs font-bold text-emerald-500 uppercase">₹{request.price}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => acceptRequest(request.id)}
+                        className="mt-8 sm:mt-0 border-2 border-emerald-500 bg-transparent px-10 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 transition-all hover:bg-emerald-500 hover:text-zinc-950 active:scale-95"
+                      >
+                        Accept Assignment
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex h-80 flex-col items-center justify-center p-8 text-center bg-zinc-950">
+                    <div className="mb-6 text-zinc-800">
+                      <AlertCircle size={64} strokeWidth={1} />
+                    </div>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Queue Empty</h3>
+                    <p className="mt-4 text-[10px] font-bold text-zinc-700 uppercase tracking-widest">No active requests detected in your sector</p>
+                  </div>
+                )}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="my-jobs"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="divide-y-2 divide-zinc-800 border-2 border-zinc-800 bg-zinc-900"
+              >
+                {myBookings.length > 0 ? (
+                  myBookings.map((booking) => (
+                    <div key={booking.id} className="p-8 transition-all hover:bg-zinc-800/50">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-12">
+                        <div className="space-y-6 flex-1">
+                          <div className="flex items-center gap-4">
+                            <div className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest border-2 ${
+                              booking.status === 'completed' ? 'bg-zinc-800 text-zinc-400 border-zinc-800' :
+                              booking.status === 'confirmed' ? 'bg-emerald-500 text-zinc-950 border-emerald-500' :
+                              'bg-transparent text-zinc-600 border-zinc-800'
+                            }`}>
+                              {booking.status}
+                            </div>
+                            <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
+                              REF: {booking.id.slice(0, 8)}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-12">
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1">Date</p>
+                              <p className="text-xs font-bold text-zinc-300 uppercase">{booking.date}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1">Time</p>
+                              <p className="text-xs font-bold text-zinc-300 uppercase">{booking.time}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1">Contact</p>
+                              <p className="text-xs font-bold text-zinc-300 uppercase">{booking.phone}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1">Address</p>
+                              <p className="text-xs font-bold text-zinc-300 uppercase truncate">{booking.address}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="sm:text-right border-l-2 border-zinc-800 sm:pl-12">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-2">Net Earnings</p>
+                          <p className="text-5xl font-black text-white tracking-tighter">₹{booking.technicianEarnings || 0}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex h-80 flex-col items-center justify-center p-8 text-center bg-zinc-950">
+                    <div className="mb-6 text-zinc-800">
+                      <ClipboardList size={64} strokeWidth={1} />
+                    </div>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">No Assignments</h3>
+                    <p className="mt-4 text-[10px] font-bold text-zinc-700 uppercase tracking-widest">Awaiting mission acceptance</p>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Sidebar Column */}
+        <div className="space-y-8">
+          {/* System Log */}
+          <div className="border-2 border-zinc-800 bg-zinc-900 p-6">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white mb-6 flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              System Log
+            </h3>
+            <div className="space-y-4 font-mono text-[9px] uppercase tracking-tighter">
+              <div className="flex gap-3 text-zinc-600">
+                <span className="text-emerald-500/50">[10:31:25]</span>
+                <span>System Initialization Complete</span>
               </div>
+              <div className="flex gap-3 text-zinc-600">
+                <span className="text-emerald-500/50">[10:31:26]</span>
+                <span>Secure Connection Established</span>
+              </div>
+              <div className="flex gap-3 text-zinc-600">
+                <span className="text-emerald-500/50">[10:31:27]</span>
+                <span>Node Sync: {user?.uid.slice(0, 8)}</span>
+              </div>
+              {technician.online && (
+                <div className="flex gap-3 text-emerald-500">
+                  <span className="opacity-50">[10:31:28]</span>
+                  <span className="animate-pulse">Broadcasting Availability...</span>
+                </div>
+              )}
             </div>
           </div>
-        ))}
+
+          {/* Performance Chart Placeholder */}
+          <div className="border-2 border-zinc-800 bg-zinc-900 p-6">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white mb-6">Performance</h3>
+            <div className="flex items-end gap-1 h-32">
+              {[40, 70, 45, 90, 65, 80, 55, 75, 85, 60].map((h, i) => (
+                <div 
+                  key={i} 
+                  className="flex-1 bg-zinc-800 transition-all duration-1000"
+                  style={{ height: technician.online ? `${h}%` : '10%' }}
+                />
+              ))}
+            </div>
+            <div className="mt-4 flex justify-between text-[8px] font-black uppercase tracking-widest text-zinc-600">
+              <span>00:00</span>
+              <span>12:00</span>
+              <span>23:59</span>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="border-2 border-zinc-800 bg-zinc-900 p-6">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white mb-6">Quick Actions</h3>
+            <div className="grid grid-cols-1 gap-2">
+              <button className="w-full border border-zinc-800 p-3 text-left text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:bg-zinc-800 hover:text-white transition-all">
+                Update Profile
+              </button>
+              <button className="w-full border border-zinc-800 p-3 text-left text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:bg-zinc-800 hover:text-white transition-all">
+                View Earnings Report
+              </button>
+              <button className="w-full border border-zinc-800 p-3 text-left text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:bg-zinc-800 hover:text-white transition-all">
+                Support Protocol
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-
-      {/* Tabs */}
-      <div className="mb-8 flex items-center gap-1 rounded-xl bg-zinc-100 p-1 border border-zinc-200 w-fit">
-        <button
-          onClick={() => setActiveTab('available')}
-          className={`flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-bold transition-all ${
-            activeTab === 'available' 
-              ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200' 
-              : 'text-zinc-500 hover:text-zinc-900'
-          }`}
-        >
-          <LayoutDashboard size={18} />
-          <span>Available Requests</span>
-          {availableRequests.length > 0 && (
-            <span className="ml-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">
-              {availableRequests.length}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab('my-jobs')}
-          className={`flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-bold transition-all ${
-            activeTab === 'my-jobs' 
-              ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200' 
-              : 'text-zinc-500 hover:text-zinc-900'
-          }`}
-        >
-          <ClipboardList size={18} />
-          <span>My Jobs</span>
-        </button>
-      </div>
-
-      {/* Content Area */}
-      <AnimatePresence mode="wait">
-        {activeTab === 'available' ? (
-          <motion.div
-            key="available"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="space-y-4"
-          >
-            {availableRequests.length > 0 ? (
-              availableRequests.map((request) => (
-                <div key={request.id} className="group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-6 transition-all hover:border-zinc-300 hover:shadow-md">
-                  <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-900">
-                          <User size={20} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-zinc-900">New Request for {request.category}</p>
-                          <p className="text-xs font-medium text-zinc-500">Posted {request.createdAt?.toDate().toLocaleTimeString()}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-4">
-                        <div className="flex items-center gap-2 text-sm text-zinc-600">
-                          <Calendar size={16} className="text-zinc-400" />
-                          <span className="font-medium">{request.date} at {request.time}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-zinc-600">
-                          <MapPin size={16} className="text-zinc-400" />
-                          <span className="font-medium truncate max-w-[200px]">{request.address}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm font-bold text-emerald-600">
-                          <IndianRupee size={16} />
-                          <span>₹{request.price}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => acceptRequest(request.id)}
-                      className="flex items-center justify-center gap-2 rounded-xl bg-zinc-900 px-8 py-3 text-sm font-bold text-white transition-all hover:bg-zinc-800 active:scale-95 shadow-sm"
-                    >
-                      <span>Accept Job</span>
-                      <ChevronRight size={18} />
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="flex h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 p-8 text-center">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-100 text-zinc-400 border border-zinc-200">
-                  <AlertCircle size={24} />
-                </div>
-                <h3 className="text-base font-bold text-zinc-900">No available requests</h3>
-                <p className="mt-1 text-sm font-medium text-zinc-500">Check back later or try changing your status to online.</p>
-              </div>
-            )}
-          </motion.div>
-        ) : (
-          <motion.div
-            key="my-jobs"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="space-y-4"
-          >
-            {myBookings.length > 0 ? (
-              myBookings.map((booking) => (
-                <div key={booking.id} className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-                  <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <span className={`rounded-lg border px-3 py-1 text-xs font-bold capitalize ${
-                          booking.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                          booking.status === 'confirmed' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                          'bg-zinc-50 text-zinc-600 border-zinc-200'
-                        }`}>
-                          {booking.status}
-                        </span>
-                        <span className="text-xs font-medium text-zinc-500">
-                          ID: {booking.id.slice(0, 8)}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-wrap gap-4">
-                        <div className="flex items-center gap-2 text-sm text-zinc-600">
-                          <Calendar size={16} className="text-zinc-400" />
-                          <span className="font-medium">{booking.date}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-zinc-600">
-                          <Clock size={16} className="text-zinc-400" />
-                          <span className="font-medium">{booking.time}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-zinc-600">
-                          <MapPin size={16} className="text-zinc-400" />
-                          <span className="font-medium truncate max-w-[200px]">{booking.address}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-zinc-600">
-                          <Phone size={16} className="text-zinc-400" />
-                          <span className="font-medium">{booking.phone}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="text-right">
-                      <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Your Earnings</p>
-                      <p className="text-2xl font-black text-zinc-900">₹{booking.technicianEarnings || 0}</p>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="flex h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 p-8 text-center">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-100 text-zinc-400 border border-zinc-200">
-                  <ClipboardList size={24} />
-                </div>
-                <h3 className="text-base font-bold text-zinc-900">No jobs yet</h3>
-                <p className="mt-1 text-sm font-medium text-zinc-500">Accept available requests to see them here.</p>
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

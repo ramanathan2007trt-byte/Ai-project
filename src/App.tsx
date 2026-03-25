@@ -19,6 +19,7 @@ import { useState } from 'react';
 export default function App() {
   const [user, loadingAuth] = useAuthState(auth);
   const [role, setRole] = useState<string | null>(null);
+  const [loadingRole, setLoadingRole] = useState(true);
 
   useEffect(() => {
     if (isNative()) {
@@ -28,27 +29,45 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (loadingAuth) return;
+    
     if (!user) {
       setRole(null);
+      setLoadingRole(false);
       return;
     }
 
     const fetchRole = async () => {
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      if (userDoc.exists()) {
-        setRole(userDoc.data().role);
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          setRole(userDoc.data().role);
+        }
+      } catch (error) {
+        console.error('Error fetching role:', error);
+      } finally {
+        setLoadingRole(false);
       }
     };
     fetchRole();
-  }, [user]);
+  }, [user, loadingAuth]);
 
-  if (loadingAuth) {
-    return null; // Or a splash screen
+  if (loadingAuth || (user && loadingRole)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-zinc-200 border-t-zinc-900" />
+          <p className="text-xs font-black uppercase tracking-widest text-zinc-400">Loading Session...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <Router>
-      <div className="min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased">
+      <div className={`min-h-screen font-sans antialiased transition-colors duration-500 ${
+        role === 'technician' ? 'bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-900'
+      }`}>
         <Header />
         <NotificationManager />
         <Routes>
