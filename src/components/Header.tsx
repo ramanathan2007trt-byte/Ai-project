@@ -1,22 +1,33 @@
-import { auth, signInWithGoogle, logout } from '../firebase';
+import { auth, db, doc, getDoc, logout } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { Link } from 'react-router-dom';
-import { Wrench, LogIn, LogOut, User, History } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Wrench, LogOut, User, History, LayoutDashboard } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function Header() {
   const [user] = useAuthState(auth);
+  const [role, setRole] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  const handleLogin = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (error) {
-      console.error('Login error:', error);
+  useEffect(() => {
+    if (!user) {
+      setRole(null);
+      return;
     }
-  };
+
+    const fetchRole = async () => {
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        setRole(userDoc.data().role);
+      }
+    };
+    fetchRole();
+  }, [user]);
 
   const handleLogout = async () => {
     try {
       await logout();
+      navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -38,13 +49,23 @@ export default function Header() {
         <nav className="flex items-center gap-6">
           {user ? (
             <div className="flex items-center gap-6">
-              <Link
-                to="/history"
-                className="flex items-center gap-2 text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900"
-              >
-                <History size={16} />
-                <span className="hidden sm:inline">Bookings</span>
-              </Link>
+              {role === 'technician' ? (
+                <Link
+                  to="/technician-dashboard"
+                  className="flex items-center gap-2 text-sm font-bold text-zinc-600 transition-colors hover:text-zinc-900"
+                >
+                  <LayoutDashboard size={16} />
+                  <span className="hidden sm:inline">Dashboard</span>
+                </Link>
+              ) : (
+                <Link
+                  to="/history"
+                  className="flex items-center gap-2 text-sm font-bold text-zinc-600 transition-colors hover:text-zinc-900"
+                >
+                  <History size={16} />
+                  <span className="hidden sm:inline">Bookings</span>
+                </Link>
+              )}
               
               <div className="h-4 w-px bg-zinc-200" />
               
@@ -62,7 +83,7 @@ export default function Header() {
                       <User size={14} />
                     </div>
                   )}
-                  <span className="hidden text-sm font-medium text-zinc-700 sm:block">
+                  <span className="hidden text-sm font-bold text-zinc-700 sm:block">
                     {user.displayName?.split(' ')[0]}
                   </span>
                 </Link>
@@ -76,15 +97,7 @@ export default function Header() {
                 </button>
               </div>
             </div>
-          ) : (
-            <button
-              onClick={handleLogin}
-              className="flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-zinc-800 active:scale-95 shadow-sm"
-            >
-              <LogIn size={16} />
-              <span>Sign In</span>
-            </button>
-          )}
+          ) : null}
         </nav>
       </div>
     </header>
