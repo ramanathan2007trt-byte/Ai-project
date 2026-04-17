@@ -22,9 +22,15 @@ export default function NotificationManager() {
             return;
           }
 
-          const token = await getToken(messaging, {
-            vapidKey: vapidKey
-          });
+          let token;
+          try {
+            token = await getToken(messaging, {
+              vapidKey: vapidKey
+            });
+          } catch (tokenError) {
+            console.warn('FCM token generation failed. This is expected in preview environments or if third-party cookies are blocked:', tokenError);
+            return;
+          }
           
           if (token) {
             // Check if user document exists before updating
