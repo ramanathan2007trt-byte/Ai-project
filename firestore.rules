@@ -101,7 +101,7 @@ service cloud.firestore {
       return hasRequiredFields(['name', 'email', 'role', 'createdAt']) &&
              data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
              isValidEmail(data.email) &&
-             data.role in ['user', 'admin'] &&
+             data.role in ['user', 'admin', 'technician'] &&
              data.createdAt is timestamp &&
              (!('phone' in data) || (data.phone is string && data.phone.size() <= 20)) &&
              (!('address' in data) || (data.address is string && data.address.size() <= 500));
@@ -162,7 +162,7 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == 'user';
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role in ['user', 'technician'];
       allow update: if isOwner(userId) && isValidUser(request.resource.data) && 
                     request.resource.data.role == resource.data.role &&
                     request.resource.data.email == resource.data.email;
@@ -170,8 +170,8 @@ service cloud.firestore {
 
     match /technicians/{technicianId} {
       allow read: if true;
-      allow create: if isAdmin() && isValidTechnician(request.resource.data);
-      allow update: if (isAdmin() || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentLocation']))) && isValidTechnician(request.resource.data);
+      allow create: if (isAdmin() || (isOwner(technicianId) && request.resource.data.verified == false)) && isValidTechnician(request.resource.data);
+      allow update: if (isAdmin() || (isOwner(technicianId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentLocation', 'online']))) && isValidTechnician(request.resource.data);
     }
 
     match /bookings/{bookingId} {

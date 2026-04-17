@@ -9,6 +9,8 @@ export default function NotificationManager() {
   useEffect(() => {
     if (!user || !messaging) return;
 
+    let unsubscribeSnapshot: (() => void) | undefined;
+
     const requestPermission = async () => {
       try {
         const permission = await Notification.requestPermission();
@@ -25,9 +27,24 @@ export default function NotificationManager() {
           });
           
           if (token) {
-            await updateDoc(doc(db, 'users', user.uid), {
-              fcmToken: token,
-              notificationsEnabled: true
+            // Check if user document exists before updating
+            const userDocRef = doc(db, 'users', user.uid);
+            let isUnsubscribed = false;
+            unsubscribeSnapshot = onSnapshot(userDocRef, async (docSnap) => {
+              if (docSnap.exists() && !isUnsubscribed) {
+                isUnsubscribed = true;
+                setTimeout(() => {
+                  if (unsubscribeSnapshot) unsubscribeSnapshot();
+                }, 0);
+                try {
+                  await updateDoc(userDocRef, {
+                    fcmToken: token,
+                    notificationsEnabled: true
+                  });
+                } catch (err) {
+                  console.error('Error updating FCM token:', err);
+                }
+              }
             });
           }
         }
@@ -39,7 +56,7 @@ export default function NotificationManager() {
     requestPermission();
 
     // Handle foreground messages
-    const unsubscribe = onMessage(messaging, (payload) => {
+    const unsubscribeMessage = onMessage(messaging, (payload) => {
       console.log('Foreground message received:', payload);
       if (payload.notification) {
         toast.success(`${payload.notification.title}: ${payload.notification.body}`, {
@@ -49,7 +66,12 @@ export default function NotificationManager() {
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeMessage();
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+      }
+    };
   }, [user]);
 
   // Simulated notifications for booking status changes

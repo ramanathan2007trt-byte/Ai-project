@@ -8,13 +8,12 @@ import Login from './pages/Login';
 import TechnicianDashboard from './pages/TechnicianDashboard';
 import NotificationManager from './components/NotificationManager';
 import { Toaster } from 'react-hot-toast';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { isNative } from './utils/platform';
-import { auth, db, doc, getDoc } from './firebase';
+import { auth, db, doc, onSnapshot } from './firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { useState } from 'react';
 
 export default function App() {
   const [user, loadingAuth] = useAuthState(auth);
@@ -37,19 +36,19 @@ export default function App() {
       return;
     }
 
-    const fetchRole = async () => {
-      try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setRole(userDoc.data().role);
-        }
-      } catch (error) {
-        console.error('Error fetching role:', error);
-      } finally {
-        setLoadingRole(false);
+    const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
+      if (docSnap.exists()) {
+        setRole(docSnap.data().role);
+      } else {
+        setRole(null);
       }
-    };
-    fetchRole();
+      setLoadingRole(false);
+    }, (error) => {
+      console.error('Error fetching role:', error);
+      setLoadingRole(false);
+    });
+
+    return () => unsubscribe();
   }, [user, loadingAuth]);
 
   if (loadingAuth || (user && loadingRole)) {
@@ -71,11 +70,11 @@ export default function App() {
         <Header />
         <NotificationManager />
         <Routes>
-          <Route path="/login" element={!user ? <Login /> : <Navigate to={role === 'technician' ? '/technician-dashboard' : '/'} />} />
-          <Route path="/" element={user ? (role === 'technician' ? <Navigate to="/technician-dashboard" /> : <Home />) : <Navigate to="/login" />} />
-          <Route path="/history" element={user ? <BookingsHistory /> : <Navigate to="/login" />} />
-          <Route path="/tracking/:bookingId" element={user ? <Tracking /> : <Navigate to="/login" />} />
-          <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />
+          <Route path="/login" element={!user || !role ? <Login /> : <Navigate to={role === 'technician' ? '/technician-dashboard' : '/'} />} />
+          <Route path="/" element={user && role ? (role === 'technician' ? <Navigate to="/technician-dashboard" /> : <Home />) : <Navigate to="/login" />} />
+          <Route path="/history" element={user && role ? <BookingsHistory /> : <Navigate to="/login" />} />
+          <Route path="/tracking/:bookingId" element={user && role ? <Tracking /> : <Navigate to="/login" />} />
+          <Route path="/profile" element={user && role ? <Profile /> : <Navigate to="/login" />} />
           <Route path="/technician-dashboard" element={user && role === 'technician' ? <TechnicianDashboard /> : <Navigate to="/login" />} />
         </Routes>
         <Toaster position="bottom-right" />
