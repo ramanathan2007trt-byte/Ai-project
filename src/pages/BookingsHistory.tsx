@@ -37,12 +37,92 @@ export default function BookingsHistory() {
   const [isCompleting, setIsCompleting] = useState(false);
 
   const [reviewingBooking, setReviewingBooking] = useState<Booking | null>(null);
+  const [isPaying, setIsPaying] = useState(false);
 
   // Filter and Sort State
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
   const [showFilters, setShowFilters] = useState(false);
+
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handlePayment = async (booking: Booking) => {
+    if (!user) return;
+    setIsPaying(true);
+    try {
+      const res = await loadRazorpay();
+      if (!res) {
+        toast.error('Razorpay SDK failed to load. Are you online?');
+        setIsPaying(false);
+        return;
+      }
+
+      const amountToPay = booking.finalCost || booking.price;
+
+      const orderResponse = await fetch('/api/create-razorpay-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ amount: amountToPay }),
+      });
+
+      if (!orderResponse.ok) {
+        throw new Error('Failed to create order');
+      }
+
+      const orderData = await orderResponse.json();
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'FixIt Services',
+        description: `${booking.category} Service Payment`,
+        order_id: orderData.id,
+        handler: async function (response: any) {
+          // Verify payment on the server if needed, then update booking
+          try {
+            await updateDoc(doc(db, 'bookings', booking.id), {
+              paymentStatus: 'Paid via Razorpay',
+              paymentMethod: 'razorpay',
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpaySignature: response.razorpay_signature,
+            });
+            toast.success('Payment successful!');
+          } catch (e) {
+            console.error('Error updating booking after payment:', e);
+            toast.error('Payment verified but failed to update status.');
+          }
+        },
+        prefill: {
+          name: user.displayName || 'Customer',
+          email: user.email || '',
+        },
+        theme: {
+          color: '#09090b', // zinc-950
+        },
+      };
+
+      const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.open();
+    } catch (e) {
+      console.error(e);
+      toast.error('Could not initiate payment. Check configuration.');
+    } finally {
+      setIsPaying(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -327,6 +407,16 @@ export default function BookingsHistory() {
                                     >
                                       <Star size={12} className="fill-amber-500" />
                                       Leave Feedback
+                                    </button>
+                                  )}
+                                  {booking.status === 'completed' && booking.paymentStatus !== 'Paid via Razorpay' && (
+                                    <button
+                                      onClick={() => handlePayment(booking)}
+                                      disabled={isPaying}
+                                      className="flex items-center gap-1.5 rounded-lg bg-indigo-600 border border-indigo-700 px-4 py-2 text-[11px] font-semibold text-white transition-all hover:bg-indigo-700 disabled:opacity-50"
+                                      title="Pay Now"
+                                    >
+                                      {isPaying ? 'Processing...' : 'Pay Now'}
                                     </button>
                                   )}
                                   {canCancel && (
